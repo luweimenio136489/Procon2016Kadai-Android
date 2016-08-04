@@ -30,7 +30,7 @@
         android:id="@+id/buttonB"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Arrow write to sdcard"
+        android:text="Write to file"
         android:layout_below="@+id/buttonA"
         android:layout_alignParentStart="true" />
 
