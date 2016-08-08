@@ -40,16 +40,13 @@ public class MainActivity extends AppCompatActivity {
         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
 
         // ボタンを設定
-        Button buttonA = (Button)findViewById(R.id.buttonA);
-        Button buttonB = (Button)findViewById(R.id.buttonB);
-
-        // TextView の設定
-        textView = (TextView) findViewById(R.id.textViewA);
+        Button startWriting = (Button)findViewById(R.id.startWritingButton);
 
         //SDカードへのpathを準備
         final File file = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/test.csv");
         file.getParentFile().mkdir();
         try {
+            //最初の一行目に"write hedder infomations here"と書く
             FileOutputStream fos = new FileOutputStream(file);
             fos.write("write hedder infomations here.\r\n".getBytes());
             fos.close();
@@ -59,52 +56,44 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        textView.setText("done");
-
-        // リスナーをボタンに登録
-        if (buttonA != null) {
-            buttonA.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                     // flagがtrueの時
-                    if (flag) {
-                        textView.setText("Hello");
-                        flag = false;
-                    }
-                    // flagがfalseの時
-                    else {
-                        textView.setText("World");
-                        flag = true;
-                    }
-                }
-            });
-        }
-
-
-        buttonB.setOnClickListener(new View.OnClickListener() {
+        startWriting.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FileOutputStream fos = null;
-                try {
-                    fos = new FileOutputStream(file,true);
-                    fos.write("1,2,3,4,5,6\r\n".getBytes());
-                    fos.close();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                //約60回/1秒で動き続ける
+                while (true) {
+
+                    String getData = "ここにデータを受け取ったデータを書いて下さい"+"\r\n";
+                    FileOutputStream fos = null;
+                    try {
+
+                        fos = new FileOutputStream(file, true);
+                        fos.write(getData.getBytes());
+                        fos.close();
+                        try {
+                            Thread.sleep(17);
+
+                            //エラー処理
+                        } catch (InterruptedException e) {
+                        }
+
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         });
     }
 
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-
+        //パーミッションの確認
         if (requestCode == 100) {
+
+            //許可をくれるまでパーミッション許可のアラートダイアログを出し続ける
             if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(MainActivity.this,"Hello",Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this,"Please allow permission",Toast.LENGTH_LONG).show();
                 ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
-                //拒否された時
             }
         }
     }
