@@ -40,13 +40,10 @@ public class BluetoothDataForRotate {
     synchronized public static float getEuler( String str) {
         switch (str) {
             case "roll":
-                System.out.println("roll:"+attitude[0]);
                 return attitude[0];
             case "pitch":
-                System.out.println("pitch: "+attitude[2]);
                 return attitude[2];
             case "gravity":
-                System.out.println("g ravity:"+data[1]);
                 return Float.parseFloat(data[1]);
             default:
                 return -1;
@@ -57,6 +54,14 @@ public class BluetoothDataForRotate {
         if(attitude[0]==0.0&&attitude[2]==0.0) {
             return false;
         }
+        return true;
+    }
+    public static boolean rollCheck(){
+        if(attitude[0]==0.0) return false;
+        return true;
+    }
+    public static boolean pitchCheck(){
+        if(attitude[2]==0.0) return false;
         return true;
     }
 }

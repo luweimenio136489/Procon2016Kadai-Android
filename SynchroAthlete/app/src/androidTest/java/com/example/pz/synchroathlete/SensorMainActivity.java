@@ -17,17 +17,24 @@
 
 package com.example.android.bluetoothchat;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentTransaction;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ViewAnimator;
 
 import com.example.android.common.activities.SampleActivityBase;
@@ -38,6 +45,7 @@ import com.example.android.common.logger.MessageOnlyLogFilter;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -56,52 +64,113 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
     // Whether the Log Fragment is currently shown
     private boolean mLogShown;
     private SensorManager sensor_manager;
-    public TextView acsserelate;
-    public TextView magnet;
-    public TextView roll, pitch, azimuth;
-    public TextView eulerRad;
     public static double Rad2Dec = (double) 180 / Math.PI;
     float[] matrix = new float[9];
     float[] accel = new float[3];
     float[] magnetic = new float[3];
     float rollEuler,pitchEuler,gravity;
     static float[] attitude = new float[3];
-    Handler mHandler = new Handler();
     static String inputStream;
-    String path = "/data/data/com.example.android.bluetoothchat/files/SensorData.txt";
-    String strToTest;
-    public File file = new File(path);
-    boolean isThreadStart=false;
+    long startTime;
+    boolean writeState=true;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         sensor_manager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-
-/*        acsserelate = (TextView) findViewById(R.id.text_value);
-        magnet = (TextView) findViewById(R.id.value2);
-        roll = (TextView) findViewById(R.id.roll);
-        pitch = (TextView) findViewById(R.id.pitch);
-        azimuth = (TextView) findViewById(R.id.azimuth);
-        eulerRad = (TextView) findViewById(R.id.euler);*/
-        try {
-            FileOutputStream out = openFileOutput("SensorData.txt", MODE_PRIVATE);
-            OutputStreamWriter osw = new OutputStreamWriter(out);
-            BufferedWriter bw = new BufferedWriter(osw);
-            inputStream = "num,0.16,num\n";
-            bw.write(inputStream);
-            bw.close();
-        } catch (IOException e) {
-            System.out.println(e);
-        } catch (Exception e) {
-            System.out.println(e);
-        }
         if (savedInstanceState == null) {
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
             BluetoothChatFragment fragment = new BluetoothChatFragment();
             transaction.replace(R.id.sample_content_fragment, fragment);
             transaction.commit();
         }
+        //パーミッションの許諾
+        ActivityCompat.requestPermissions(SensorMainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
+
+        // ボタンを設定
+        Button startWriting = (Button)findViewById(R.id.startWritingButton);
+        Button stopWriting = (Button)findViewById(R.id.stopWritingButton);
+        //SDカードへのpathを準備
+        final File file = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/test.text");
+        file.getParentFile().mkdir();
+        try {
+            //最初の一行目に"write hedder infomations here"と書く
+            FileOutputStream fos = new FileOutputStream(file);
+            fos.write("write hedder infomations here.\r\n".getBytes());
+            fos.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        startWriting.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(BluetoothChatFragment.BT_CONNECT==1) {
+                    Log.d("State","データ書き込み中");
+                    final float[] initAttitude = new float[3];
+                    float initRoll = 0;
+                    float initPitch = 0;
+                    final float initGravity;
+                    initAttitude[0] = attitude[0];
+                    initAttitude[1] = attitude[1];
+                    initAttitude[2] = attitude[2];
+                    if (BluetoothDataForRotate.rollCheck()) initRoll = BluetoothDataForRotate.getEuler("roll");
+                    if (BluetoothDataForRotate.pitchCheck()) initPitch = BluetoothDataForRotate.getEuler("pitch");
+                    initGravity = (float) Math.sqrt(accel[0] * accel[0] + accel[1] * accel[1] + accel[2] * accel[2]);
+                    startTime=System.currentTimeMillis();
+                    //約60回/1秒で動き続ける
+                    final float finalInitRoll = initRoll;
+                    final float finalInitPitch = initPitch;
+                    (new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            while (writeState) {
+
+                                if (BluetoothDataForRotate.rollCheck())
+                                    rollEuler = BluetoothDataForRotate.getEuler("roll");
+                                if (BluetoothDataForRotate.pitchCheck())
+                                    pitchEuler = BluetoothDataForRotate.getEuler("pitch");
+                                gravity = (float) Math.sqrt(accel[0] * accel[0] + accel[1] * accel[1] + accel[2] * accel[2]);
+                                inputStream = System.currentTimeMillis() - startTime +
+                                        "," + Integer.toString((int) (initAttitude[0] * Rad2Dec - attitude[0] * Rad2Dec)) +
+                                        "," + Integer.toString((int) (initAttitude[1] * Rad2Dec - attitude[1] * Rad2Dec)) +
+                                        "," + Integer.toString((int) (initAttitude[2] * Rad2Dec - attitude[2] * Rad2Dec)) +
+                                        "," + Integer.toString((int) (finalInitRoll * Rad2Dec - rollEuler * Rad2Dec)) +
+                                        "," + Integer.toString((int) (finalInitPitch * Rad2Dec - pitchEuler * Rad2Dec)) +
+                                        "," + (initGravity - gravity) + "\n";
+                                FileOutputStream fos = null;
+                                try {
+
+                                    fos = new FileOutputStream(file, true);
+                                    fos.write(inputStream.getBytes());
+                                    fos.close();
+                                    try {
+                                        Thread.sleep(17);
+
+                                        //エラー処理
+                                    } catch (InterruptedException e) {
+                                    }
+
+                                } catch (FileNotFoundException e) {
+                                    e.printStackTrace();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    })).start();
+                } else Log.d("State","Not BT Connect");
+            }
+        });
+        stopWriting.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d("State","ファイル書き込み停止");
+                writeState = false;
+            }
+        });
     }
 
     @Override
@@ -176,10 +245,11 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
         }
 
         if (accel != null && magnetic != null) {
-            if(BluetoothDataForRotate.isMakeRotate()&&!isThreadStart){
+            /*if(BluetoothDataForRotate.isMakeRotate()&&!isThreadStart){
                 (new Thread(new inputData())).start();
+                startTime = System.currentTimeMillis();
                 isThreadStart=true;
-            }
+            }*/
             // 加速度センサと磁気センサからX,Y,Z軸に対する傾きを出す
             SensorManager.getRotationMatrix(matrix, null, accel, magnetic);
             SensorManager.getOrientation(matrix, attitude);
@@ -187,22 +257,6 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
             //attitude[0]:azimuth  attitude[1]:pitch  attitude[2]:roll
             //座標系は X:pitch Y:azimuth Z:roll とする
 
-            /*
-            roll.setText(String.valueOf("Roll\n" + Integer.toString((int) (attitude[2] * Rad2Dec))));
-            pitch.setText(String.valueOf("pitch\n" + Integer.toString((int) (attitude[1] * Rad2Dec))));
-            azimuth.setText(String.valueOf("azimuth\n" + Integer.toString((int) (attitude[0] * Rad2Dec))));*/
-
-            /*   BluetoothDataForRotate.javaテスト用コード
-            strToTest=Float.toString(accel[0])+","+Float.toString(accel[1])+","+Float.toString(accel[2])+","+Float.toString(magnetic[0])+","+Float.toString(magnetic[1])+","+Float.toString(magnetic[2]);
-            DataCast.stringToData(strToTest);
-            attitude[2]=DataCast.getEuler("roll");
-            attitude[1]=DataCast.getEuler("pitch");*/
-
-/*
-            eulerRad.setText(String.valueOf("Euler:\n("
-                    + Integer.toString((int) (attitude[2] * Rad2Dec))
-                    + "," + Integer.toString((int) (attitude[1] * Rad2Dec))
-                    + "," + Integer.toString((int) (attitude[0] * Rad2Dec)) + ")"));*/
         }
 
     }
@@ -218,17 +272,16 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
         }
     }
 
-    public void inputText() {
+    /*public void inputText() {
         try {
             FileOutputStream out = openFileOutput("SensorData.txt", MODE_APPEND);
             OutputStreamWriter osw = new OutputStreamWriter(out);
             BufferedWriter bw = new BufferedWriter(osw);
-            if(BluetoothDataForRotate.isMakeRotate()) {
-                rollEuler = BluetoothDataForRotate.getEuler("roll");
-                pitchEuler = BluetoothDataForRotate.getEuler("pitch");
-                gravity = BluetoothDataForRotate.getEuler("gravity");
-            }
-            inputStream = Integer.toString((int) (attitude[0] * Rad2Dec)) +
+            if(BluetoothDataForRotate.rollCheck()) rollEuler = BluetoothDataForRotate.getEuler("roll");
+            if(BluetoothDataForRotate.pitchCheck()) pitchEuler = BluetoothDataForRotate.getEuler("pitch");
+            gravity = (float)Math.sqrt(accel[0]*accel[0]+accel[1]*accel[1]+accel[2]*accel[2]);
+            inputStream = System.currentTimeMillis()-startTime +
+                    "," + Integer.toString((int) (attitude[0] * Rad2Dec)) +
                     "," + Integer.toString((int) (attitude[1] * Rad2Dec)) +
                     "," + Integer.toString((int) (attitude[2] * Rad2Dec)) +
                     "," + Integer.toString((int) (rollEuler * Rad2Dec))+
@@ -241,18 +294,32 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
         } catch (Exception e) {
             System.out.println(e);
         }
-    }
+    }*/
     public class inputData implements Runnable{
         @Override
         public void run() {
             while(true) {
                 try {
                     Thread.sleep(16);
-                    inputText();
+                    //inputText();
                 } catch (Exception e) {
                     System.out.println(e);
                 }
             }
         }
     }
+
+
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        //パーミッションの確認
+        if (requestCode == 100) {
+
+            //許可をくれるまでパーミッション許可のアラートダイアログを出し続ける
+            if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(SensorMainActivity.this,"Please allow permission",Toast.LENGTH_LONG).show();
+                ActivityCompat.requestPermissions(SensorMainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
+            }
+        }
+    }
+
 }
