@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "/home/tukitan/workspace/bluetoothchat/android-BluetoothChat/Application/build/intermediates/res/merged/debug/layout-w720dp-v13/print_data.xml",
+        "source": "/home/tukitan/workspace/bluetoothchat/android-BluetoothChat/Application/src/main/res/layout-w720dp/print_data.xml"
+    },
+    {
+        "merged": "/home/tukitan/workspace/bluetoothchat/android-BluetoothChat/Application/build/intermediates/res/merged/debug/layout-w720dp-v13/activity_main.xml",
+        "source": "/home/tukitan/workspace/bluetoothchat/android-BluetoothChat/Application/src/main/res/layout-w720dp/activity_main.xml"
+    }
+]

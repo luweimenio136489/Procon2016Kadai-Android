@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "/home/tukitan/workspace/bluetoothchat/android-BluetoothChat/Application/build/intermediates/res/merged/debug/menu/main.xml",
+        "source": "/home/tukitan/workspace/bluetoothchat/android-BluetoothChat/Application/src/main/res/menu/main.xml"
+    },
+    {
+        "merged": "/home/tukitan/workspace/bluetoothchat/android-BluetoothChat/Application/build/intermediates/res/merged/debug/menu/bluetooth_chat.xml",
+        "source": "/home/tukitan/workspace/bluetoothchat/android-BluetoothChat/Application/src/main/res/menu/bluetooth_chat.xml"
+    }
+]
