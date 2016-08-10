@@ -14,113 +14,98 @@ import com.squareup.okhttp.Response;
 
 import java.io.IOException;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+    private ThetaS_Shutter thetaS_shutter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        final ThetaS_Shutter thetas_shutter = new ThetaS_Shutter();
-        thetas_shutter.connect();
-
-        ImageButton shutter = (ImageButton)findViewById(R.id.shutter);
-        assert shutter != null;
-        shutter.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v){
-
-                thetas_shutter.shutter();
-
-            }
-        });
-
-        ImageButton modevideo = (ImageButton)findViewById(R.id.modevideo);
-        assert modevideo != null;
-        modevideo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                thetas_shutter.mode(true);
-
-            }
-        });
-
-        ImageButton modecamera = (ImageButton)findViewById(R.id.modecamera);
-        assert  modecamera != null;
-        modecamera.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                thetas_shutter.mode(false);
-
-            }
-        });
-
-        ImageButton rec = (ImageButton)findViewById(R.id.rec);
-        assert rec != null;
-        rec.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                thetas_shutter.startcapture();
-
-            }
-        });
-
-        ImageButton stop = (ImageButton)findViewById(R.id.stop);
-        assert stop != null;
-        stop.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                thetas_shutter.stopcapture();
-
-            }
-        });
-
-
+        thetaS_shutter = new ThetaS_Shutter();
+        thetaS_shutter.connect();
+        ((ImageButton) findViewById(R.id.shutter)).setOnClickListener(this);
+        ((ImageButton) findViewById(R.id.modevideo)).setOnClickListener(this);
+        ((ImageButton) findViewById(R.id.modecamera)).setOnClickListener(this);
+        ((ImageButton) findViewById(R.id.rec)).setOnClickListener(this);
+        ((ImageButton) findViewById(R.id.stop)).setOnClickListener(this);
     }
 
 
-
-
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.shutter:
+                thetaS_shutter.shutter();
+                break;
+            case R.id.modevideo:
+                thetaS_shutter.mode(true);
+                break;
+            case R.id.modecamera:
+                thetaS_shutter.mode(false);
+                break;
+            case R.id.rec:
+                thetaS_shutter.startcapture();
+                break;
+            case R.id.stop:
+                thetaS_shutter.stopcapture();
+                break;
+        }
+    }
 }
 
-class ThetaS_Shutter{
+class ThetaS_Shutter {
 
-    void connect(){
-        run("{\"name\": \"camera.startSession\" ,\"parameters\": {}}");
+    /**
+     * セッションを開始。セッションIDを発行する。
+     */
+    void connect() {
+        sendRequest("{\"name\": \"camera.startSession\" ,\"parameters\": {}}");
     }
 
-    void shutter(){
-        run("{\"name\": \"camera.takePicture\" ,\"parameters\": {\"sessionId\" :\"SID_0001\"}}");
+    /**
+     * 静止画撮影を開始する。
+     */
+    void shutter() {
+        sendRequest("{\"name\": \"camera.takePicture\" ,\"parameters\": {\"sessionId\" :\"SID_0001\"}}");
     }
 
-    void startcapture(){
-        run("{\"name\": \"camera._startCapture\" ,\"parameters\": {\"sessionId\" :\"SID_0001\"}}");
+    /**
+     * v2.0
+     * 連続撮影を開始する。
+     */
+    void startcapture() {
+        sendRequest("{\"name\": \"camera._startCapture\" ,\"parameters\": {\"sessionId\" :\"SID_0001\"}}");
     }
 
-    void stopcapture(){
-        run("{\"name\": \"camera._stopCapture\" ,\"parameters\": {\"sessionId\" :\"SID_0001\"}}");
+    /**
+     * v2.0
+     * 連続撮影を停止する。
+     */
+    void stopcapture() {
+        sendRequest("{\"name\": \"camera._stopCapture\" ,\"parameters\": {\"sessionId\" :\"SID_0001\"}}");
     }
 
-    void mode(boolean mode){
+    /**
+     * 撮影モード指定
+     *
+     * @param mode true:動画 false:画像
+     */
+    void mode(boolean mode) {
         String value;
-        if (mode == true){
+        if (mode == true) {
             value = "_video";
-        }else {
+        } else {
             value = "image";
         }
 
         option("captureMode", value);
     }
 
-    public static void option(String option_name, String option_value){
-        run("{\"name\": \"camera.setOptions\" ,\"parameters\": {\"sessionId\" :\"SID_0001\", \"options\": {\"" + option_name + "\": \"" + option_value + "\"}}}");
+    public static void option(String option_name, String option_value) {
+        sendRequest("{\"name\": \"camera.setOptions\" ,\"parameters\": {\"sessionId\" :\"SID_0001\", \"options\": {\"" + option_name + "\": \"" + option_value + "\"}}}");
     }
 
-    public static void run(final String payload){
+    public static void sendRequest(final String payload) {
         new AsyncTask<Void, Void, String>() {
             @Override
             protected String doInBackground(Void... params) {
@@ -136,10 +121,8 @@ class ThetaS_Shutter{
                         .url("http://192.168.1.1/osc/commands/execute")
                         .post(requestBody)
                         .build();
-
                 // クライアントオブジェクトを作って
                 OkHttpClient client = new OkHttpClient();
-
                 // リクエストして結果を受け取って
                 try {
                     Response response = client.newCall(request).execute();
@@ -147,15 +130,10 @@ class ThetaS_Shutter{
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
-
                 // 返す
                 return result;
             }
 
         }.execute();
     }
-
 }
-
-
