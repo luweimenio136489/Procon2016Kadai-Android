@@ -24,6 +24,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -43,6 +44,11 @@ import com.example.android.common.logger.Log;
 import com.example.android.common.logger.LogFragment;
 import com.example.android.common.logger.LogWrapper;
 import com.example.android.common.logger.MessageOnlyLogFilter;
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
+import com.squareup.okhttp.Response;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -50,6 +56,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 
 /**
  * A simple launcher activity containing a summary sample description, sample log and a custom
@@ -76,6 +86,8 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
     boolean writeState=true;
 
     private ThetaS_Shutter thetaS_shutter;
+    private static String settionID = "SID_0001";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -114,7 +126,7 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
             @Override
             public void onClick(View v) {
                 if(BluetoothChatFragment.BT_CONNECT==1) {
-                    thetaS_shutter.startcapture();
+                    sendRequest(ThetaRequest.getStartcaptureRequest(settionID));
                     Log.d("State","データ書き込み中");
                     final float[] initAttitude = new float[3];
                     float initRoll = 0;
@@ -176,14 +188,14 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
             @Override
             public void onClick(View v) {
                 Log.d("State","ファイル書き込み,撮影停止");
-                thetaS_shutter.stopcapture();
+                sendRequest(ThetaRequest.getStopcaptureRequest(settionID));
                 writeState = false;
             }
         });
         cam_modevideo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v){
-                thetaS_shutter.mode(true);
+                sendRequest(ThetaRequest.getModeRequest(true, settionID));
             }
         });
     }
@@ -192,6 +204,10 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
         SendRequestAsync asyncTask = new SendRequestAsync(getApplicationContext(), args);
         asyncTask.execute();
     }
+    public void refleshSession() {
+        sendRequest(ThetaRequest.getConnectRequest());
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -297,6 +313,86 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
                 ActivityCompat.requestPermissions(SensorMainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
             }
         }
+    }
+    public class SendRequestAsync extends AsyncTask<Void, Void, String> {
+        String payload_;
+        Context context_;
+
+        public SendRequestAsync(Context context, String payload) {
+            context_ = context;
+            payload_ = payload;
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+            String result = null;
+
+            // リクエストボディを作る
+            RequestBody requestBody = RequestBody.create(
+                    MediaType.parse("application/json"), payload_
+            );
+
+            // リクエストオブジェクトを作って
+            Request request = new Request.Builder()
+                    .url("http://192.168.1.1/osc/commands/execute")
+                    .post(requestBody)
+                    .build();
+            // クライアントオブジェクトを作って
+            OkHttpClient client = new OkHttpClient();
+            // リクエストして結果を受け取って
+            try {
+                Response response = client.newCall(request).execute();
+                return response.body().string();
+            } catch (IOException e) {
+                e.printStackTrace();
+                return e.getMessage();
+            }
+            // 返す
+//                return result;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            try {
+                if (isSessionId(s)) {
+                    JSONObject jsonObject = new JSONObject(s);
+                    settionID = jsonObject.getString("sessionId");
+                } else if (isInvalidSessionId(s)) {
+                    refleshSession();
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            Toast.makeText(context_, s, Toast.LENGTH_SHORT).show();
+            android.util.Log.i("result code ", "CODE:" + s);
+        }
+
+        public boolean isInvalidSessionId(String data) {
+            try {
+                JSONObject jsonObject = new JSONObject(data);
+                if (jsonObject.getJSONObject("error").getString("code") == "invalidSessionId")
+                    return true;
+            } catch (JSONException e) {
+                e.printStackTrace();
+                return false;
+            }
+            return false;
+        }
+
+        public boolean isSessionId(String data) {
+            try {
+                JSONObject jsonObject = new JSONObject(data);
+                if (jsonObject.getString("sessionId") != null)
+                    return true;
+            } catch (JSONException e) {
+                e.printStackTrace();
+                return false;
+            }
+            return false;
+        }
+
     }
     public class ThetaS_Shutter {
         public ThetaS_Shutter() {

@@ -90,13 +90,18 @@
       <file leaf-file-name="SensorMainActivity.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Application/src/main/java/com/example/android/bluetoothchat/SensorMainActivity.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.4772118">
-              <caret line="148" column="11" selection-start-line="148" selection-start-column="11" selection-end-line="148" selection-end-column="11" />
+            <state vertical-scroll-proportion="0.69164264">
+              <caret line="180" column="29" selection-start-line="180" selection-start-column="29" selection-end-line="180" selection-end-column="29" />
               <folding>
+                <element signature="imports" expanded="true" />
                 <element signature="method#onCreateOptionsMenu#0;class#SensorMainActivity#0" expanded="false" />
                 <element signature="method#onPrepareOptionsMenu#0;class#SensorMainActivity#0" expanded="false" />
+                <element signature="e#9628#9652#0" expanded="true" />
+                <element signature="e#9655#9679#0" expanded="true" />
                 <element signature="method#onOptionsItemSelected#0;class#SensorMainActivity#0" expanded="false" />
                 <element signature="method#initializeLogging#0;class#SensorMainActivity#0" expanded="false" />
+                <element signature="e#15869#15870#0" expanded="true" />
+                <element signature="e#15963#15964#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -112,11 +117,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="SendRequestAsync.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Application/src/main/java/com/example/android/bluetoothchat/SendRequestAsync.java">
+      <file leaf-file-name="ThetaRequest.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Application/src/main/java/com/example/android/bluetoothchat/ThetaRequest.java">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="21" column="0" selection-start-line="21" selection-start-column="0" selection-end-line="21" selection-end-column="0" />
+              <caret line="21" column="16" selection-start-line="21" selection-start-column="16" selection-end-line="21" selection-end-column="16" />
               <folding>
                 <element signature="imports" expanded="true" />
               </folding>
@@ -1705,9 +1710,10 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/Application/build.gradle" />
-        <option value="$PROJECT_DIR$/Application/src/main/java/com/example/android/bluetoothchat/SendRequestAsync.java" />
         <option value="$PROJECT_DIR$/Application/src/main/java/com/example/android/bluetoothchat/ThetaS_Shutter.java" />
         <option value="$PROJECT_DIR$/Application/src/main/res/layout/activity_main.xml" />
+        <option value="$PROJECT_DIR$/Application/src/main/java/com/example/android/bluetoothchat/SendRequestAsync.java" />
+        <option value="$PROJECT_DIR$/Application/src/main/java/com/example/android/bluetoothchat/ThetaRequest.java" />
         <option value="$PROJECT_DIR$/Application/src/main/java/com/example/android/bluetoothchat/SensorMainActivity.java" />
       </list>
     </option>
@@ -2187,15 +2193,20 @@
         <state vertical-scroll-proportion="0.0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
+            <element signature="imports" expanded="true" />
             <element signature="method#onCreateOptionsMenu#0;class#SensorMainActivity#0" expanded="false" />
             <element signature="method#onPrepareOptionsMenu#0;class#SensorMainActivity#0" expanded="false" />
+            <element signature="e#9628#9652#0" expanded="true" />
+            <element signature="e#9655#9679#0" expanded="true" />
             <element signature="method#onOptionsItemSelected#0;class#SensorMainActivity#0" expanded="false" />
             <element signature="method#initializeLogging#0;class#SensorMainActivity#0" expanded="false" />
+            <element signature="e#15869#15870#0" expanded="true" />
+            <element signature="e#15963#15964#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Application/src/main/java/com/example/android/bluetoothchat/SendRequestAsync.java">
+    <entry file="file://$PROJECT_DIR$/Application/src/main/java/com/example/android/bluetoothchat/ThetaRequest.java">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="21" column="0" selection-start-line="21" selection-start-column="0" selection-end-line="21" selection-end-column="0" />
@@ -2221,15 +2232,20 @@
         <state vertical-scroll-proportion="0.0">
           <caret line="191" column="40" selection-start-line="191" selection-start-column="40" selection-end-line="191" selection-end-column="40" />
           <folding>
+            <element signature="imports" expanded="true" />
             <element signature="method#onCreateOptionsMenu#0;class#SensorMainActivity#0" expanded="false" />
             <element signature="method#onPrepareOptionsMenu#0;class#SensorMainActivity#0" expanded="false" />
+            <element signature="e#9628#9652#0" expanded="true" />
+            <element signature="e#9655#9679#0" expanded="true" />
             <element signature="method#onOptionsItemSelected#0;class#SensorMainActivity#0" expanded="false" />
             <element signature="method#initializeLogging#0;class#SensorMainActivity#0" expanded="false" />
+            <element signature="e#15869#15870#0" expanded="true" />
+            <element signature="e#15963#15964#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Application/src/main/java/com/example/android/bluetoothchat/SendRequestAsync.java">
+    <entry file="file://$PROJECT_DIR$/Application/src/main/java/com/example/android/bluetoothchat/ThetaRequest.java">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
@@ -2261,16 +2277,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="1.3093146">
           <caret line="21328" column="0" selection-start-line="21328" selection-start-column="0" selection-end-line="21328" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Application/src/main/java/com/example/android/bluetoothchat/SendRequestAsync.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="21" column="0" selection-start-line="21" selection-start-column="0" selection-end-line="21" selection-end-column="0" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -2293,15 +2300,30 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/Application/src/main/java/com/example/android/bluetoothchat/ThetaRequest.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="21" column="16" selection-start-line="21" selection-start-column="16" selection-end-line="21" selection-end-column="16" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/Application/src/main/java/com/example/android/bluetoothchat/SensorMainActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.4772118">
-          <caret line="148" column="11" selection-start-line="148" selection-start-column="11" selection-end-line="148" selection-end-column="11" />
+        <state vertical-scroll-proportion="0.69164264">
+          <caret line="180" column="29" selection-start-line="180" selection-start-column="29" selection-end-line="180" selection-end-column="29" />
           <folding>
+            <element signature="imports" expanded="true" />
             <element signature="method#onCreateOptionsMenu#0;class#SensorMainActivity#0" expanded="false" />
             <element signature="method#onPrepareOptionsMenu#0;class#SensorMainActivity#0" expanded="false" />
+            <element signature="e#9628#9652#0" expanded="true" />
+            <element signature="e#9655#9679#0" expanded="true" />
             <element signature="method#onOptionsItemSelected#0;class#SensorMainActivity#0" expanded="false" />
             <element signature="method#initializeLogging#0;class#SensorMainActivity#0" expanded="false" />
+            <element signature="e#15869#15870#0" expanded="true" />
+            <element signature="e#15963#15964#0" expanded="true" />
           </folding>
         </state>
       </provider>
