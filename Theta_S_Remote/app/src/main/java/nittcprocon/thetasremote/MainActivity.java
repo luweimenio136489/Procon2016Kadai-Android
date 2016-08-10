@@ -1,6 +1,5 @@
 package nittcprocon.thetasremote;
 
-import android.app.Activity;
 import android.content.Context;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -16,17 +15,20 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
+import java.io.StringReader;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
-    private ThetaS_Shutter thetaS_shutter;
+    private static String settionID = "SID_0001";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        thetaS_shutter = new ThetaS_Shutter();
-        thetaS_shutter.connect();
+        sendRequest(TheataRequest.getConnectRequest());
         ((ImageButton) findViewById(R.id.shutter)).setOnClickListener(this);
         ((ImageButton) findViewById(R.id.modevideo)).setOnClickListener(this);
         ((ImageButton) findViewById(R.id.modecamera)).setOnClickListener(this);
@@ -39,19 +41,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.shutter:
-                thetaS_shutter.shutter();
+                sendRequest(TheataRequest.getShutterRequest(settionID));
                 break;
             case R.id.modevideo:
-                thetaS_shutter.mode(true);
+                sendRequest(TheataRequest.getModeRequest(true, settionID));
                 break;
             case R.id.modecamera:
-                thetaS_shutter.mode(false);
+                sendRequest(TheataRequest.getModeRequest(false, settionID));
                 break;
             case R.id.rec:
-                thetaS_shutter.startcapture();
+                sendRequest(TheataRequest.getStartcaptureRequest(settionID));
                 break;
             case R.id.stop:
-                thetaS_shutter.stopcapture();
+                sendRequest(TheataRequest.getStopcaptureRequest(settionID));
                 break;
         }
     }
@@ -100,69 +102,72 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //                return result;
         }
 
+        /**
+         * CODE:{"name":"camera.startSession","state":"done","results":{ "sessionId":"SID_0002","timeout":180}}
+         * CODE:{"name":"camera.setOptions","state":"error","error":{"code":"invalidSessionId","message":"The sessionId is invalid."}}
+         *
+         * @param s
+         */
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
+            try {
+                if (isSessionId(s)) {
+                    JSONObject jsonObject = new JSONObject(s);
+                    settionID = jsonObject.getString("sessionId");
+                } else if (isInvalidSessionId(s)) {
+                    refleshSession();
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
             Toast.makeText(context_, s, Toast.LENGTH_SHORT).show();
             Log.i("result code ", "CODE:" + s);
         }
 
-    }
-
-    public class ThetaS_Shutter {
-
-        /**
-         * セッションを開始。セッションIDを発行する。
-         */
-        void connect() {
-            sendRequest("{\"name\": \"camera.startSession\" ,\"parameters\": {}}");
-        }
-
-        /**
-         * 静止画撮影を開始する。
-         */
-        void shutter() {
-            sendRequest("{\"name\": \"camera.takePicture\" ,\"parameters\": {\"sessionId\" :\"SID_0001\"}}");
-        }
-        
-
-        /**
-         * v2.0
-         * 連続撮影を開始する。
-         */
-        void startcapture() {
-            sendRequest("{\"name\": \"camera._startCapture\" ,\"parameters\": {\"sessionId\" :\"SID_0001\"}}");
-        }
-
-        /**
-         * v2.0
-         * 連続撮影を停止する。
-         */
-        void stopcapture() {
-            sendRequest("{\"name\": \"camera._stopCapture\" ,\"parameters\": {\"sessionId\" :\"SID_0001\"}}");
-        }
-
-        /**
-         * 撮影モード指定
-         *
-         * @param mode true:動画 false:画像
-         */
-        void mode(boolean mode) {
-            String value;
-            if (mode == true) {
-                value = "_video";
-            } else {
-                value = "image";
+        public boolean isInvalidSessionId(String data) {
+            try {
+                JSONObject jsonObject = new JSONObject(data);
+                if (jsonObject.getJSONObject("error").getString("code") == "invalidSessionId")
+                    return true;
+            } catch (JSONException e) {
+                e.printStackTrace();
+                return false;
             }
-
-            option("captureMode", value);
+            return false;
         }
 
-        private void option(String option_name, String option_value) {
-            sendRequest("{\"name\": \"camera.setOptions\" ,\"parameters\": {\"sessionId\" :\"SID_0001\", \"options\": {\"" + option_name + "\": \"" + option_value + "\"}}}");
+        public boolean isSessionId(String data) {
+            try {
+                JSONObject jsonObject = new JSONObject(data);
+                if (jsonObject.getString("sessionId") != null)
+                    return true;
+            } catch (JSONException e) {
+                e.printStackTrace();
+                return false;
+            }
+            return false;
         }
-
 
     }
+
+    private class timeKeeper extends Thread {
+        public static final long SLEEP_TIME_SECONDS = 120;
+
+        public timeKeeper() {
+            try {
+                Thread.sleep(1000 * SLEEP_TIME_SECONDS);
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void refleshSession() {
+        sendRequest(TheataRequest.getConnectRequest());
+    }
+
 
 }
