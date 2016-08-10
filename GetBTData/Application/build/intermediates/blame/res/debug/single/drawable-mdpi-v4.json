@@ -6,5 +6,13 @@
     {
         "merged": "/home/tukitan/workspace/bluetoothchat/android-BluetoothChat/Application/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_action_device_access_bluetooth_searching.png",
         "source": "/home/tukitan/workspace/bluetoothchat/android-BluetoothChat/Application/src/main/res/drawable-mdpi/ic_action_device_access_bluetooth_searching.png"
+    },
+    {
+        "merged": "/home/tukitan/workspace/Clone/Procon2016Kadai-Android/GetBTData/Application/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_action_device_access_bluetooth_searching.png",
+        "source": "/home/tukitan/workspace/Clone/Procon2016Kadai-Android/GetBTData/Application/src/main/res/drawable-mdpi/ic_action_device_access_bluetooth_searching.png"
+    },
+    {
+        "merged": "/home/tukitan/workspace/Clone/Procon2016Kadai-Android/GetBTData/Application/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_launcher.png",
+        "source": "/home/tukitan/workspace/Clone/Procon2016Kadai-Android/GetBTData/Application/src/main/res/drawable-mdpi/ic_launcher.png"
     }
 ]
