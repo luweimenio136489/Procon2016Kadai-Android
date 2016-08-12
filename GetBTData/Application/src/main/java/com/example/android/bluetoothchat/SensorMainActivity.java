@@ -24,6 +24,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -33,6 +34,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewAnimator;
@@ -42,6 +44,11 @@ import com.example.android.common.logger.Log;
 import com.example.android.common.logger.LogFragment;
 import com.example.android.common.logger.LogWrapper;
 import com.example.android.common.logger.MessageOnlyLogFilter;
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
+import com.squareup.okhttp.Response;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -50,6 +57,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+
 /**
  * A simple launcher activity containing a summary sample description, sample log and a custom
  * {@link android.support.v4.app.Fragment} which can display a view.
@@ -57,7 +68,7 @@ import java.io.OutputStreamWriter;
  * For devices with displays with a width of 720dp or greater, the sample log is always visible,
  * on other devices it's visibility is controlled by an item on the Action Bar.
  */
-public class SensorMainActivity extends SampleActivityBase implements SensorEventListener{
+public class SensorMainActivity extends SampleActivityBase implements SensorEventListener {
 
     public static final String TAG = "MainActivity";
 
@@ -73,6 +84,10 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
     static String inputStream;
     long startTime;
     boolean writeState=true;
+
+    private ThetaS_Shutter thetaS_shutter;
+    private static String settionID = "SID_0001";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -88,15 +103,18 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
         ActivityCompat.requestPermissions(SensorMainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
 
         // ボタンを設定
-        Button startWriting = (Button)findViewById(R.id.startWritingButton);
+        //Button startWriting = (Button)findViewById(R.id.startWritingButton);
         Button stopWriting = (Button)findViewById(R.id.stopWritingButton);
+        ImageButton cam_rec =(ImageButton) findViewById(R.id.rec);
+        ImageButton cam_modevideo =(ImageButton) findViewById(R.id.modevideo);
+        thetaS_shutter = new ThetaS_Shutter();
         //SDカードへのpathを準備
         final File file = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/test.text");
         file.getParentFile().mkdir();
         try {
             //最初の一行目に"write hedder infomations here"と書く
             FileOutputStream fos = new FileOutputStream(file);
-            fos.write("write hedder infomations here.\r\n".getBytes());
+            fos.write("write hedder infomations here\r\n".getBytes());
             fos.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -104,11 +122,11 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
             e.printStackTrace();
         }
 
-        startWriting.setOnClickListener(new View.OnClickListener() {
+        cam_rec.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if(BluetoothChatFragment.BT_CONNECT==1) {
-
+                    sendRequest(ThetaRequest.getStartcaptureRequest(settionID));
                     Log.d("State","データ書き込み中");
                     final float[] initAttitude = new float[3];
                     float initRoll = 0;
@@ -169,20 +187,27 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
         stopWriting.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d("State","ファイル書き込み停止");
-                /*try {
-                    FileOutputStream fos = new FileOutputStream(file,true);
-                    fos.write("Write stream is stopped.\r\n".getBytes());
-                    fos.close();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }*/
+                Log.d("State","ファイル書き込み,撮影停止");
+                sendRequest(ThetaRequest.getStopcaptureRequest(settionID));
                 writeState = false;
             }
         });
+        cam_modevideo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v){
+                sendRequest(ThetaRequest.getModeRequest(true, settionID));
+            }
+        });
     }
+
+    public void sendRequest(String args) {
+        SendRequestAsync asyncTask = new SendRequestAsync(getApplicationContext(), args);
+        asyncTask.execute();
+    }
+    public void refleshSession() {
+        sendRequest(ThetaRequest.getConnectRequest());
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -256,11 +281,6 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
         }
 
         if (accel != null && magnetic != null) {
-            /*if(BluetoothDataForRotate.isMakeRotate()&&!isThreadStart){
-                (new Thread(new inputData())).start();
-                startTime = System.currentTimeMillis();
-                isThreadStart=true;
-            }*/
             // 加速度センサと磁気センサからX,Y,Z軸に対する傾きを出す
             SensorManager.getRotationMatrix(matrix, null, accel, magnetic);
             SensorManager.getOrientation(matrix, attitude);
@@ -283,44 +303,6 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
         }
     }
 
-    /*public void inputText() {
-        try {
-            FileOutputStream out = openFileOutput("SensorData.txt", MODE_APPEND);
-            OutputStreamWriter osw = new OutputStreamWriter(out);
-            BufferedWriter bw = new BufferedWriter(osw);
-            if(BluetoothDataForRotate.rollCheck()) rollEuler = BluetoothDataForRotate.getEuler("roll");
-            if(BluetoothDataForRotate.pitchCheck()) pitchEuler = BluetoothDataForRotate.getEuler("pitch");
-            gravity = (float)Math.sqrt(accel[0]*accel[0]+accel[1]*accel[1]+accel[2]*accel[2]);
-            inputStream = System.currentTimeMillis()-startTime +
-                    "," + Integer.toString((int) (attitude[0] * Rad2Dec)) +
-                    "," + Integer.toString((int) (attitude[1] * Rad2Dec)) +
-                    "," + Integer.toString((int) (attitude[2] * Rad2Dec)) +
-                    "," + Integer.toString((int) (rollEuler * Rad2Dec))+
-                    "," + Integer.toString((int) (pitchEuler * Rad2Dec))+
-                    "," + Integer.toString((int)gravity) + "\n";
-            bw.write(inputStream);
-            bw.close();
-        } catch (IOException e) {
-            System.out.println(e);
-        } catch (Exception e) {
-            System.out.println(e);
-        }
-    }*/
-    public class inputData implements Runnable{
-        @Override
-        public void run() {
-            while(true) {
-                try {
-                    Thread.sleep(16);
-                    //inputText();
-                } catch (Exception e) {
-                    System.out.println(e);
-                }
-            }
-        }
-    }
-
-
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         //パーミッションの確認
         if (requestCode == 100) {
@@ -331,6 +313,142 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
                 ActivityCompat.requestPermissions(SensorMainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
             }
         }
+    }
+    public class SendRequestAsync extends AsyncTask<Void, Void, String> {
+        String payload_;
+        Context context_;
+
+        public SendRequestAsync(Context context, String payload) {
+            context_ = context;
+            payload_ = payload;
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+            String result = null;
+
+            // リクエストボディを作る
+            RequestBody requestBody = RequestBody.create(
+                    MediaType.parse("application/json"), payload_
+            );
+
+            // リクエストオブジェクトを作って
+            Request request = new Request.Builder()
+                    .url("http://192.168.1.1/osc/commands/execute")
+                    .post(requestBody)
+                    .build();
+            // クライアントオブジェクトを作って
+            OkHttpClient client = new OkHttpClient();
+            // リクエストして結果を受け取って
+            try {
+                Response response = client.newCall(request).execute();
+                return response.body().string();
+            } catch (IOException e) {
+                e.printStackTrace();
+                return e.getMessage();
+            }
+            // 返す
+//                return result;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            try {
+                if (isSessionId(s)) {
+                    JSONObject jsonObject = new JSONObject(s);
+                    settionID = jsonObject.getString("sessionId");
+                } else if (isInvalidSessionId(s)) {
+                    refleshSession();
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            Toast.makeText(context_, s, Toast.LENGTH_SHORT).show();
+            android.util.Log.i("result code ", "CODE:" + s);
+        }
+
+        public boolean isInvalidSessionId(String data) {
+            try {
+                JSONObject jsonObject = new JSONObject(data);
+                if (jsonObject.getJSONObject("error").getString("code") == "invalidSessionId")
+                    return true;
+            } catch (JSONException e) {
+                e.printStackTrace();
+                return false;
+            }
+            return false;
+        }
+
+        public boolean isSessionId(String data) {
+            try {
+                JSONObject jsonObject = new JSONObject(data);
+                if (jsonObject.getString("sessionId") != null)
+                    return true;
+            } catch (JSONException e) {
+                e.printStackTrace();
+                return false;
+            }
+            return false;
+        }
+
+    }
+    public class ThetaS_Shutter {
+        public ThetaS_Shutter() {
+            connect();
+        }
+        /**
+         * セッションを開始。セッションIDを発行する。
+         */
+        void connect () {
+            sendRequest("{\"name\": \"camera.startSession\" ,\"parameters\": {}}");
+        }
+        /**
+         * 静止画撮影を開始する。
+         */
+        void shutter() {
+            sendRequest("{\"name\": \"camera.takePicture\" ,\"parameters\": {\"sessionId\" :\"SID_0001\"}}");
+        }
+
+
+        /**
+         * v2.0
+         * 連続撮影を開始する。
+         */
+        void startcapture() {
+            sendRequest("{\"name\": \"camera._startCapture\" ,\"parameters\": {\"sessionId\" :\"SID_0001\"}}");
+        }
+
+        /**
+         * v2.0
+         * 連続撮影を停止する。
+         */
+        void stopcapture() {
+            sendRequest("{\"name\": \"camera._stopCapture\" ,\"parameters\": {\"sessionId\" :\"SID_0001\"}}");
+        }
+
+        /**
+         * 撮影モード指定
+         *
+         * @param mode true:動画 false:画像
+         */
+        void mode(boolean mode) {
+            String value;
+            if (mode == true) {
+                value = "_video";
+            } else {
+                value = "image";
+            }
+
+            option("captureMode", value);
+        }
+
+        private void option(String option_name, String option_value) {
+            sendRequest("{\"name\": \"camera.setOptions\" ,\"parameters\": {\"sessionId\" :\"SID_0001\", \"options\": {\"" + option_name + "\": \"" + option_value + "\"}}}");
+        }
+
+
     }
 
 }
