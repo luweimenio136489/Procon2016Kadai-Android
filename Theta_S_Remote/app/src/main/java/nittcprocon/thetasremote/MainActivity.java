@@ -14,12 +14,9 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.IOException;
-import java.io.StringReader;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private static String settionID = "SID_0001";

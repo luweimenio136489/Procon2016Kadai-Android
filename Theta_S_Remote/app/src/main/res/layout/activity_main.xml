@@ -9,46 +9,61 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="nittcprocon.thetasremote.MainActivity">
 
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true">
+
 
         <ImageButton
             android:layout_width="171dp"
             android:layout_height="171dp"
             android:id="@+id/shutter"
+            android:hint="shutter"
             android:layout_gravity="center"
-            android:src="@android:drawable/ic_menu_camera" />
+            android:src="@android:drawable/ic_menu_camera"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true" />
 
         <ImageButton
             android:layout_width="92dp"
             android:layout_height="76dp"
+            android:hint="modevideo"
             android:id="@+id/modevideo"
             android:layout_gravity="right|top"
-            android:src="@android:drawable/ic_menu_slideshow" />
+            android:src="@android:drawable/ic_menu_slideshow"
+            android:layout_alignParentTop="true"
+            android:layout_alignLeft="@+id/stop"
+            android:layout_alignStart="@+id/stop" />
 
         <ImageButton
             android:layout_width="92dp"
             android:layout_height="76dp"
+            android:hint="modecamera"
             android:id="@+id/modecamera"
             android:layout_gravity="left|top"
-            android:src="@android:drawable/ic_menu_camera" />
+            android:src="@android:drawable/ic_menu_camera"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
 
         <ImageButton
             android:layout_width="92dp"
             android:layout_height="76dp"
+            android:hint="rec"
             android:id="@+id/rec"
             android:layout_gravity="left|bottom"
-            android:src="@android:drawable/ic_media_play" />
+            android:src="@android:drawable/ic_media_play"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
 
         <ImageButton
             android:layout_width="92dp"
             android:layout_height="76dp"
             android:id="@+id/stop"
+            android:hint="stop"
             android:layout_gravity="right|bottom"
-            android:src="@android:drawable/ic_media_pause" />
-    </FrameLayout>
+            android:src="@android:drawable/ic_media_pause"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true" />
+
+
 </RelativeLayout>
