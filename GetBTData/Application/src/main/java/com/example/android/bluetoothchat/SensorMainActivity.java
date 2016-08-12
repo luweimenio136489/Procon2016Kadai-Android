@@ -42,6 +42,7 @@ import android.widget.ViewAnimator;
 import com.example.android.common.activities.SampleActivityBase;
 import com.example.android.common.logger.Log;
 import com.example.android.common.logger.LogFragment;
+import com.example.android.common.logger.LogView;
 import com.example.android.common.logger.LogWrapper;
 import com.example.android.common.logger.MessageOnlyLogFilter;
 import com.squareup.okhttp.MediaType;
@@ -82,6 +83,7 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
 
     private static String settionID = "SID_0001";
     public static final long SLEEP_TIME_SECONDS = 120;
+    private LogView logView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,7 +98,9 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
         }
         //パーミッションの許諾
         ActivityCompat.requestPermissions(SensorMainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
-
+        LogFragment logFragment = (LogFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.log_fragment);
+        logView = logFragment.getLogView();
         // ボタンを設定
         //Button startWriting = (Button)findViewById(R.id.startWritingButton);
         ((Button) findViewById(R.id.stopWritingButton)).setOnClickListener(this);
@@ -194,7 +198,7 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
         // On screen logging via a fragment with a TextView.
         LogFragment logFragment = (LogFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.log_fragment);
-        msgFilter.setNext(logFragment.getLogView());
+        msgFilter.setNext(logView);
 
         Log.i(TAG, "Ready");
     }
@@ -263,13 +267,12 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
      * @param isclear
      */
     public void logHTML(String text, boolean isclear) {
-        LogFragment logFragment = (LogFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.log_fragment);
+
         if (isclear) {
-            logFragment.getLogView().setText("");
-            logFragment.getLogView().append(Html.fromHtml("<br>" + text));
+            logView.setText("");
+            logView.append(Html.fromHtml("<br>" + text));
         } else {
-            logFragment.getLogView().append(Html.fromHtml("<br>" + text));
+            logView.append(Html.fromHtml("<br>" + text));
         }
     }
 
@@ -284,7 +287,6 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.rec:
-                //コード長すぎ。
                 if (BluetoothChatFragment.BT_CONNECT == 1) {
                     //SDカードへのpathを準備
                     final File file = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/test.text");
@@ -358,7 +360,7 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
                         }
                     })).start();
                 } else Log.d("State", "Not BT Connect");
-
+                break;
             case R.id.stopWritingButton:
                 Log.d("State", "ファイル書き込み,撮影停止");
                 sendRequest(ThetaRequest.getStopcaptureRequest(settionID));
@@ -422,7 +424,7 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
                 if (isSessionId(s)) {
                     JSONObject jsonObject = new JSONObject(s);
                     logHTML("<font color=\"Green\">" + s + "</font>", false);
-                    settionID = jsonObject.getString("sessionId");
+                    settionID = jsonObject.getJSONObject("results").getString("sessionId");
                     logHTML("セッション更新", false);
                 } else if (isInvalidSessionId(s)) {
                     logHTML("<font color=\"Red\">" + s + "</font>", false);
@@ -436,7 +438,7 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
             }
 
 //            Toast.makeText(context_, s, Toast.LENGTH_SHORT).show();
-//            Log.i("result code ", "CODE:" + s);
+            Log.i("result code ", "CODE:" + s);
         }
 
 
@@ -455,7 +457,7 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
         public boolean isSessionId(String data) {
             try {
                 JSONObject jsonObject = new JSONObject(data);
-                if (jsonObject.getString("sessionId") != null)
+                if (jsonObject.getJSONObject("results").getString("sessionId") != null)
                     return true;
             } catch (JSONException e) {
                 e.printStackTrace();
