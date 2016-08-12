@@ -96,6 +96,7 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
             transaction.replace(R.id.sample_content_fragment, fragment);
             transaction.commit();
         }
+
         //パーミッションの許諾
         ActivityCompat.requestPermissions(SensorMainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
         LogFragment logFragment = (LogFragment) getSupportFragmentManager()
@@ -146,6 +147,7 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
     public void sendRequest(String args) {
         SendRequestAsync asyncTask = new SendRequestAsync(getApplicationContext(), args);
         asyncTask.execute();
+
     }
 
 
@@ -304,6 +306,7 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
 
                     sendRequest(ThetaRequest.getStartcaptureRequest(settionID));
                     Log.d("State", "データ書き込み中");
+
                     final float[] initAttitude = new float[3];
                     float initRoll = 0;
                     float initPitch = 0;

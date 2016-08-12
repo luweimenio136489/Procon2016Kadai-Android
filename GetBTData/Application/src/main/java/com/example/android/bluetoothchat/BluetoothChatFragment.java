@@ -97,6 +97,7 @@ public class BluetoothChatFragment extends Fragment {
         BT_CONNECT = btConnect;
     }
 
+    private boolean isConnectState = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -161,8 +162,6 @@ public class BluetoothChatFragment extends Fragment {
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         mConversationView = (ListView) view.findViewById(R.id.in);
-        mOutEditText = (EditText) view.findViewById(R.id.edit_text_out);
-        mSendButton = (Button) view.findViewById(R.id.send);
 
     }
 
@@ -178,7 +177,6 @@ public class BluetoothChatFragment extends Fragment {
         mConversationView.setAdapter(mConversationArrayAdapter);
 
         // Initialize the compose field with a listener for the return key
-        mOutEditText.setOnEditorActionListener(mWriteListener);
 /*
         // Initialize the send button with a listener that for click events
         mSendButton.setOnClickListener(new View.OnClickListener() {
@@ -306,6 +304,8 @@ public class BluetoothChatFragment extends Fragment {
                         case BluetoothChatService.STATE_LISTEN:
                         case BluetoothChatService.STATE_NONE:
                             setStatus(R.string.title_not_connected);
+                            setBtConnect(0);
+                            isConnectState = false;
                             break;
                     }
                     break;
@@ -324,6 +324,10 @@ public class BluetoothChatFragment extends Fragment {
                     if(!readMessage.equals("")){
                         //mConversationArrayAdapter.add(mConnectedDeviceName + ":  " + readMessage);
                         BluetoothDataForRotate.stringToData(readMessage);
+                        if(!isConnectState){
+                            Toast.makeText(getActivity(),"データの受信を確認", Toast.LENGTH_SHORT).show();
+                            isConnectState = true;
+                        }
                     }
                     break;
                 case Constants.MESSAGE_DEVICE_NAME:
