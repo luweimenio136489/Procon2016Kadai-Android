@@ -37,4 +37,7 @@
     <string name="insecure_connect">Connect a device - Insecure</string>
     <string name="discoverable">Make discoverable</string>
 
+    <string name="current_session">Current settion:</string>
+    <string name="set_videoMode">Videoモード設定</string>
+    <string name="reconnect">reconnect</string>
 </resources>

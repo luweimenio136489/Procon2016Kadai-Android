@@ -103,7 +103,7 @@ public class SensorMainActivity extends FragmentActivity implements SensorEventL
         // ボタンを設定
         //Button startWriting = (Button)findViewById(R.id.startWritingButton);
         ((ImageButton) findViewById(R.id.stopWritingButton)).setOnClickListener(this);
-        ((Button) findViewById(R.id.clearlog)).setOnClickListener(this);
+        ((ImageButton) findViewById(R.id.clearlog)).setOnClickListener(this);
         ((Button) findViewById(R.id.reconnect)).setOnClickListener(this);
         ((ImageButton) findViewById(R.id.rec)).setOnClickListener(this);
         ((Button) findViewById(R.id.modevideo)).setOnClickListener(this);
