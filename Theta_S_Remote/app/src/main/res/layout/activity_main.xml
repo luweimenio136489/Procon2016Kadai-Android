@@ -96,5 +96,14 @@
 
     </FrameLayout>
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Reconnect"
+        android:id="@+id/reconnectButton"
+        android:layout_gravity="right|center_vertical"
+        android:layout_above="@+id/frameLayout"
+        android:layout_centerHorizontal="true" />
+
 
 </RelativeLayout>

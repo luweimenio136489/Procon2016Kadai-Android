@@ -41,6 +41,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ((ImageButton) findViewById(R.id.rec)).setOnClickListener(this);
         ((ImageButton) findViewById(R.id.stop)).setOnClickListener(this);
         ((Button) findViewById(R.id.button)).setOnClickListener(this);
+        ((Button) findViewById(R.id.reconnectButton)).setOnClickListener(this);
         autoRefreshSettion();//autorefresh session
 
     }
@@ -118,6 +119,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.button:
                 logAppend("", true);
                 break;
+            case R.id.reconnectButton:
+                refleshSession();
+                break;
         }
     }
 
@@ -127,6 +131,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         asyncTask.execute();
     }
 
+
+
+
+
+    public void refleshSession() {
+        logAppend("<font color=\"Green\">" + TheataRequest.getConnectRequest() + "</font>", false);
+        sendRequest(TheataRequest.getConnectRequest());
+    }
 
     public class SendRequestAsync extends AsyncTask<Void, Void, String> {
         String payload_;
@@ -220,12 +232,5 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
     }
-
-
-    public void refleshSession() {
-        logAppend("<font color=\"Green\">" + TheataRequest.getConnectRequest() + "</font>", false);
-        sendRequest(TheataRequest.getConnectRequest());
-    }
-
 
 }
