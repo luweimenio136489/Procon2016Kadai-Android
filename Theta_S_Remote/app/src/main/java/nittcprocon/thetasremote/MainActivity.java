@@ -3,6 +3,7 @@ package nittcprocon.thetasremote;
 import android.content.Context;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Html;
 import android.util.Log;
 import android.view.View;
 import android.os.AsyncTask;
@@ -37,7 +38,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ((ImageButton) findViewById(R.id.stop)).setOnClickListener(this);
         ((Button) findViewById(R.id.button)).setOnClickListener(this);
 
-        logAppend(TheataRequest.getConnectRequest() + "\n", false);
+        logAppend(TheataRequest.getConnectRequest(), false);
         sendRequest(TheataRequest.getConnectRequest());
 
 //        new TimeKeeper().start();//自動でsessionIDをリフレッシュ
@@ -52,10 +53,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      */
     public void logAppend(String text, boolean isclear) {
         if (isclear) {
-            ((TextView) findViewById(R.id.logtext)).setText("");
-            ((TextView) findViewById(R.id.logtext)).append(text);
+            ((TextView) findViewById(R.id.logtext)).setText("clear");
+            ((TextView) findViewById(R.id.logtext)).append(Html.fromHtml(text + "<br>"));
         } else {
-            ((TextView) findViewById(R.id.logtext)).append(text);
+            ((TextView) findViewById(R.id.logtext)).append(Html.fromHtml(text + "<br>"));
         }
         final ScrollView scrollView = (ScrollView) findViewById(R.id.logscrollview);
         scrollView.post(new Runnable() {
@@ -70,23 +71,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.shutter:
-                logAppend(TheataRequest.getShutterRequest(settionID) + "\n", false);
+                logAppend(TheataRequest.getShutterRequest(settionID), false);
                 sendRequest(TheataRequest.getShutterRequest(settionID));
                 break;
             case R.id.modevideo:
-                logAppend(TheataRequest.getModeRequest(true, settionID) + "\n", false);
+                logAppend(TheataRequest.getModeRequest(true, settionID), false);
                 sendRequest(TheataRequest.getModeRequest(true, settionID));
                 break;
             case R.id.modecamera:
-                logAppend(TheataRequest.getModeRequest(false, settionID) + "\n", false);
+                logAppend(TheataRequest.getModeRequest(false, settionID), false);
                 sendRequest(TheataRequest.getModeRequest(false, settionID));
                 break;
             case R.id.rec:
-                logAppend(TheataRequest.getStartcaptureRequest(settionID) + "\n", false);
+                logAppend(TheataRequest.getStartcaptureRequest(settionID), false);
                 sendRequest(TheataRequest.getStartcaptureRequest(settionID));
                 break;
             case R.id.stop:
-                logAppend(TheataRequest.getStopcaptureRequest(settionID) + "\n", false);
+                logAppend(TheataRequest.getStopcaptureRequest(settionID), false);
                 sendRequest(TheataRequest.getStopcaptureRequest(settionID));
                 break;
             case R.id.button:
@@ -133,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return response.body().string();
             } catch (IOException e) {
                 e.printStackTrace();
-                return e.getMessage();
+                return "CATCH ERROR:: " + e.getMessage();
             }
             // 返す
 //                return result;
@@ -151,15 +152,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             try {
                 if (isSessionId(s)) {
                     JSONObject jsonObject = new JSONObject(s);
+                    logAppend("<font color=\"Green\">" + s + "</font>", false);
                     settionID = jsonObject.getString("sessionId");
+                    logAppend("セッション更新", false);
                 } else if (isInvalidSessionId(s)) {
+                    logAppend("<font color=\"Red\">" + s + "</font>", false);
+                    logAppend("<font color=\"Red\">" + "セッションの更新します" + "</font>", false);
                     refleshSession();
+                } else if (s.contains("CATCH ERROR::")) {
+                    logAppend("<font color=\"Red\">" + s + "</font>", false);
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            Toast.makeText(context_, s, Toast.LENGTH_SHORT).show();
+//            Toast.makeText(context_, s, Toast.LENGTH_SHORT).show();
             Log.i("result code ", "CODE:" + s);
         }
 
@@ -203,7 +210,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void refleshSession() {
-        logAppend(TheataRequest.getConnectRequest() + "\n", false);
+        logAppend(TheataRequest.getConnectRequest(), false);
         sendRequest(TheataRequest.getConnectRequest());
     }
 
