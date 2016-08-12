@@ -37,6 +37,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewAnimator;
 
@@ -65,8 +66,6 @@ import org.json.JSONObject;
 public class SensorMainActivity extends FragmentActivity implements SensorEventListener, View.OnClickListener {
 
     public static final String TAG = "MainActivity";
-
-    // Whether the Log Fragment is currently shown
     private boolean mLogShown;
     private SensorManager sensor_manager;
     public static double Rad2Dec = (double) 180 / Math.PI;
@@ -79,9 +78,9 @@ public class SensorMainActivity extends FragmentActivity implements SensorEventL
     long startTime;
     boolean writeState = true;
 
-    private static String settionID = "SID_0001";
-    public static final long SLEEP_TIME_SECONDS = 120;
-    private LogView logView;
+    private static String settionID = "SID_0000"; //http通信側のsessionID
+    public static final long SLEEP_TIME_SECONDS = 120; ///sessionIDの更新間隔
+    private LogView logView; //ログ
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,6 +116,11 @@ public class SensorMainActivity extends FragmentActivity implements SensorEventL
         initializeLogging();
     }
 
+
+    /**
+     * セッションの自動更新
+     * SLEEP_TIME_SESSIONで秒設定
+     */
     public void autoRefreshSettion() {
         refleshSession();
         final Handler handler = new Handler();
@@ -253,10 +257,15 @@ public class SensorMainActivity extends FragmentActivity implements SensorEventL
         }
     }
 
+    /**
+     * permission要求
+     *
+     * @param requestCode
+     * @param permissions
+     * @param grantResults
+     */
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-        //パーミッションの確認
         if (requestCode == 100) {
-
             //許可をくれるまでパーミッション許可のアラートダイアログを出し続ける
             if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(SensorMainActivity.this, "Please allow permission", Toast.LENGTH_LONG).show();
@@ -282,6 +291,9 @@ public class SensorMainActivity extends FragmentActivity implements SensorEventL
     }
 
 
+    /**
+     * セッションのリフレッシュ
+     */
     public void refleshSession() {
         logHTML("<font color=\"Green\">" + ThetaRequest.getConnectRequest() + "</font>", false);
         sendRequest(ThetaRequest.getConnectRequest());
@@ -386,6 +398,9 @@ public class SensorMainActivity extends FragmentActivity implements SensorEventL
         }
     }
 
+    /**
+     * HTTP通信を行うクラス
+     */
     public class SendRequestAsync extends AsyncTask<Void, Void, String> {
         String payload_;
         Context context_;
@@ -443,7 +458,12 @@ public class SensorMainActivity extends FragmentActivity implements SensorEventL
             }
         }
 
-
+        /**
+         * 無効なセッションIDが含まれているか
+         *
+         * @param data
+         * @return
+         */
         public boolean isInvalidSessionId(String data) {
             try {
                 JSONObject jsonObject = new JSONObject(data);
@@ -455,6 +475,12 @@ public class SensorMainActivity extends FragmentActivity implements SensorEventL
             return false;
         }
 
+        /**
+         * セッションIDが含まれているかどうか
+         *
+         * @param data
+         * @return
+         */
         public boolean isSessionId(String data) {
             try {
                 JSONObject jsonObject = new JSONObject(data);
