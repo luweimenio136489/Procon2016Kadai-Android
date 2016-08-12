@@ -29,6 +29,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.text.Html;
 import android.view.Menu;
@@ -39,7 +40,6 @@ import android.widget.ImageButton;
 import android.widget.Toast;
 import android.widget.ViewAnimator;
 
-import com.example.android.common.activities.SampleActivityBase;
 import com.example.android.common.logger.Log;
 import com.example.android.common.logger.LogFragment;
 import com.example.android.common.logger.LogView;
@@ -61,10 +61,8 @@ import org.json.JSONObject;
 
 
 /**
- * 不要なコードは消す！
- * 簡潔に見やすくする！
  */
-public class SensorMainActivity extends SampleActivityBase implements SensorEventListener, View.OnClickListener {
+public class SensorMainActivity extends FragmentActivity implements SensorEventListener, View.OnClickListener {
 
     public static final String TAG = "MainActivity";
 
@@ -104,13 +102,19 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
         logView = logFragment.getLogView();
         // ボタンを設定
         //Button startWriting = (Button)findViewById(R.id.startWritingButton);
-        ((Button) findViewById(R.id.stopWritingButton)).setOnClickListener(this);
+        ((ImageButton) findViewById(R.id.stopWritingButton)).setOnClickListener(this);
         ((Button) findViewById(R.id.clearlog)).setOnClickListener(this);
         ((Button) findViewById(R.id.reconnect)).setOnClickListener(this);
         ((ImageButton) findViewById(R.id.rec)).setOnClickListener(this);
-        ((ImageButton) findViewById(R.id.modevideo)).setOnClickListener(this);
+        ((Button) findViewById(R.id.modevideo)).setOnClickListener(this);
         autoRefreshSettion();
 
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        initializeLogging();
     }
 
     public void autoRefreshSettion() {
@@ -186,7 +190,6 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
     /**
      * Create a chain of targets that will receive log data
      */
-    @Override
     public void initializeLogging() {
         // Wraps Android's native log framework.
         LogWrapper logWrapper = new LogWrapper();
@@ -413,8 +416,7 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
                 Response response = client.newCall(request).execute();
                 return response.body().string();
             } catch (IOException e) {
-                e.printStackTrace();
-                return e.getMessage();
+                return "CATCH ERROR::" + e.getMessage();
             }
             // 返す
 //                return result;
@@ -433,15 +435,12 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
                     logHTML("<font color=\"Red\">" + s + "</font>", false);
                     logHTML("<font color=\"Red\">" + "セッションの更新します" + "</font>", false);
                     refleshSession();
-                } else if (s.contains("CATCH ERROR::")) {
+                } else if (s.contains("CATCH ERROR")) {
                     logHTML("<font color=\"Red\">" + s + "</font>", false);
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-
-//            Toast.makeText(context_, s, Toast.LENGTH_SHORT).show();
-            Log.i("result code ", "CODE:" + s);
         }
 
 
@@ -451,7 +450,6 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
                 if (jsonObject.getJSONObject("error").getString("code") == "invalidSessionId")
                     return true;
             } catch (JSONException e) {
-                e.printStackTrace();
                 return false;
             }
             return false;
@@ -463,7 +461,6 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
                 if (jsonObject.getJSONObject("results").getString("sessionId") != null)
                     return true;
             } catch (JSONException e) {
-                e.printStackTrace();
                 return false;
             }
             return false;

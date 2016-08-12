@@ -90,10 +90,14 @@ public class LogFragment extends Fragment {
 
         mLogView.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                mScrollView.fullScroll(ScrollView.FOCUS_DOWN);
+            }
 
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                mScrollView.fullScroll(ScrollView.FOCUS_DOWN);
+            }
 
             @Override
             public void afterTextChanged(Editable s) {

@@ -13,60 +13,73 @@
   See the License for the specific language governing permissions and
   limitations under the License.
   -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/sample_main_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
     <Button
-        android:id="@+id/stopWritingButton"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:text="STOP" />
-
-    <ImageButton
-        android:id="@+id/rec"
-        android:layout_width="match_parent"
-        android:layout_height="120dp"
-        android:layout_gravity="left|bottom"
-        android:src="@android:drawable/ic_media_play" />
-
-    <ImageButton
         android:id="@+id/modevideo"
         android:layout_width="match_parent"
-        android:layout_height="76dp"
+        android:layout_height="wrap_content"
+        android:text="Videoモード設定"
         android:layout_gravity="right|top"
-        android:src="@android:drawable/ic_menu_slideshow" />
+        android:src="@android:drawable/ic_menu_slideshow"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
 
     <Button
         android:id="@+id/reconnect"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:text="reconnect" />
+        android:text="reconnect"
+        android:layout_below="@+id/linearLayout"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
 
     <ViewAnimator
         android:id="@+id/sample_output"
         android:layout_width="match_parent"
+        android:layout_height="110dp"
+        android:background="#aaaaaa"
         android:minHeight="250dp"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:background="#aaaaaa">
-
-        <fragment
-            android:id="@+id/log_fragment"
-            android:name="com.example.android.common.logger.LogFragment"
+        android:layout_below="@+id/reconnect"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true">
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            android:layout_below="@+id/rec"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true">
 
+
+            <fragment
+                android:id="@+id/log_fragment"
+                android:name="com.example.android.common.logger.LogFragment"
+                android:layout_width="match_parent"
+                android:layout_margin="10dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="right|center_vertical" />
+
+            <Button
+                android:id="@+id/clearlog"
+                android:layout_width="wrap_content"
+                android:layout_height="50dp"
+                android:layout_gravity="right|bottom"
+                android:text="clearLog" />
+        </FrameLayout>
     </ViewAnimator>
 
-    <Button
-        android:id="@+id/clearlog"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:text="clearLog" />
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/darker_gray"
+        android:id="@+id/view" />
 
     <View
         android:layout_width="match_parent"
@@ -75,10 +88,33 @@
 
     <FrameLayout
         android:id="@+id/sample_content_fragment"
+        android:layout_width="0dp"
+        android:layout_height="0dp" />
+
+    <LinearLayout
+        android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="0px"
-        android:layout_weight="2" />
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@+id/sample_content_fragment"
+        android:layout_toRightOf="@+id/sample_content_fragment"
+        android:layout_below="@+id/modevideo"
+        android:id="@+id/linearLayout">
+
+        <ImageButton
+            android:id="@+id/rec"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_media_play"
+            android:layout_weight="1" />
+
+        <ImageButton
+            android:id="@+id/stopWritingButton"
+            android:layout_width="0dp"
+            android:src="@android:drawable/ic_media_pause"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+    </LinearLayout>
 
 
-</LinearLayout>
+</RelativeLayout>
 
