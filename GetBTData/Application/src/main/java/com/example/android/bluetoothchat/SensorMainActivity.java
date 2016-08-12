@@ -30,11 +30,14 @@ import android.os.Environment;
 import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentTransaction;
+import android.text.Html;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ScrollView;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewAnimator;
 
@@ -80,6 +83,7 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
     boolean writeState = true;
 
     private static String settionID = "SID_0001";
+    public static final long SLEEP_TIME_SECONDS = 120;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,7 +104,34 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
         ((Button) findViewById(R.id.stopWritingButton)).setOnClickListener(this);
         ((ImageButton) findViewById(R.id.rec)).setOnClickListener(this);
         ((ImageButton) findViewById(R.id.modevideo)).setOnClickListener(this);
+        autoRefreshSettion();
+        
+    }
 
+    public void autoRefreshSettion() {
+        refleshSession();
+        final Handler handler = new Handler();
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    // マルチスレッドにしたい処理 ここから
+                    try {
+                        Thread.sleep(1000 * SLEEP_TIME_SECONDS);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            refleshSession();
+                        }
+                    });
+                }
+                // マルチスレッドにしたい処理 ここまで
+            }
+        }).start();
     }
 
     /**
@@ -111,10 +142,6 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
     public void sendRequest(String args) {
         SendRequestAsync asyncTask = new SendRequestAsync(getApplicationContext(), args);
         asyncTask.execute();
-    }
-
-    public void refleshSession() {
-        sendRequest(ThetaRequest.getConnectRequest());
     }
 
 
@@ -229,6 +256,30 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
         }
     }
 
+    /**
+     * ログを吐きます
+     *
+     * @param text
+     * @param isclear
+     */
+    public void logAppend(String text, boolean isclear) {
+        LogFragment logFragment = (LogFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.log_fragment);
+        if (isclear) {
+            logFragment.getLogView().setText("");
+            logFragment.getLogView().append(Html.fromHtml(text + "<br>"));
+        } else {
+            logFragment.getLogView().append(Html.fromHtml(text + "<br>"));
+        }
+    }
+
+
+    public void refleshSession() {
+        logAppend("<font color=\"Green\">" + ThetaRequest.getConnectRequest() + "</font>", false);
+        sendRequest(ThetaRequest.getConnectRequest());
+    }
+
+
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
@@ -315,6 +366,7 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
                 break;
 
             case R.id.modevideo:
+                logAppend(ThetaRequest.getModeRequest(true, settionID), false);
                 sendRequest(ThetaRequest.getModeRequest(true, settionID));
                 break;
         }
@@ -363,17 +415,24 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
             try {
                 if (isSessionId(s)) {
                     JSONObject jsonObject = new JSONObject(s);
+                    logAppend("<font color=\"Green\">" + s + "</font>", false);
                     settionID = jsonObject.getString("sessionId");
+                    logAppend("セッション更新", false);
                 } else if (isInvalidSessionId(s)) {
+                    logAppend("<font color=\"Red\">" + s + "</font>", false);
+                    logAppend("<font color=\"Red\">" + "セッションの更新します" + "</font>", false);
                     refleshSession();
+                } else if (s.contains("CATCH ERROR::")) {
+                    logAppend("<font color=\"Red\">" + s + "</font>", false);
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            Toast.makeText(context_, s, Toast.LENGTH_SHORT).show();
-            android.util.Log.i("result code ", "CODE:" + s);
+//            Toast.makeText(context_, s, Toast.LENGTH_SHORT).show();
+//            Log.i("result code ", "CODE:" + s);
         }
+
 
         public boolean isInvalidSessionId(String data) {
             try {
@@ -398,6 +457,5 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
             }
             return false;
         }
-
     }
 }
