@@ -79,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      */
     public void logAppend(String text, boolean isclear) {
         if (isclear) {
-            ((TextView) findViewById(R.id.logtext)).setText("clear");
+            ((TextView) findViewById(R.id.logtext)).setText("");
             ((TextView) findViewById(R.id.logtext)).append(Html.fromHtml(text + "<br>"));
         } else {
             ((TextView) findViewById(R.id.logtext)).append(Html.fromHtml(text + "<br>"));
@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         final ScrollView scrollView = (ScrollView) findViewById(R.id.logscrollview);
         scrollView.post(new Runnable() {
             public void run() {
-                scrollView.scrollTo(0, scrollView.getBottom());
+                scrollView.fullScroll(ScrollView.FOCUS_DOWN);
             }
         });
     }
@@ -117,7 +117,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 sendRequest(TheataRequest.getStopcaptureRequest(settionID));
                 break;
             case R.id.button:
-                logAppend("", true);
+                logAppend("clear", true);
                 break;
             case R.id.reconnectButton:
                 refleshSession();
@@ -130,9 +130,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         SendRequestAsync asyncTask = new SendRequestAsync(getApplicationContext(), args);
         asyncTask.execute();
     }
-
-
-
 
 
     public void refleshSession() {
