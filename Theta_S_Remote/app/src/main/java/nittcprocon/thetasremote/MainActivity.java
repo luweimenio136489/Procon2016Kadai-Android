@@ -6,7 +6,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.os.AsyncTask;
+import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ScrollView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.squareup.okhttp.MediaType;
@@ -14,8 +17,10 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
+
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -25,12 +30,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        sendRequest(TheataRequest.getConnectRequest());
         ((ImageButton) findViewById(R.id.shutter)).setOnClickListener(this);
         ((ImageButton) findViewById(R.id.modevideo)).setOnClickListener(this);
         ((ImageButton) findViewById(R.id.modecamera)).setOnClickListener(this);
         ((ImageButton) findViewById(R.id.rec)).setOnClickListener(this);
         ((ImageButton) findViewById(R.id.stop)).setOnClickListener(this);
+        ((Button) findViewById(R.id.button)).setOnClickListener(this);
+
+        logAppend(TheataRequest.getConnectRequest() + "\n", false);
+        sendRequest(TheataRequest.getConnectRequest());
+
+//        new TimeKeeper().start();//自動でsessionIDをリフレッシュ
+
+    }
+
+    /**
+     * ログを吐きます
+     *
+     * @param text
+     * @param isclear
+     */
+    public void logAppend(String text, boolean isclear) {
+        if (isclear) {
+            ((TextView) findViewById(R.id.logtext)).setText("");
+            ((TextView) findViewById(R.id.logtext)).append(text);
+        } else {
+            ((TextView) findViewById(R.id.logtext)).append(text);
+        }
+        final ScrollView scrollView = (ScrollView) findViewById(R.id.logscrollview);
+        scrollView.post(new Runnable() {
+            public void run() {
+                scrollView.scrollTo(0, scrollView.getBottom());
+            }
+        });
     }
 
 
@@ -38,19 +70,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.shutter:
+                logAppend(TheataRequest.getShutterRequest(settionID) + "\n", false);
                 sendRequest(TheataRequest.getShutterRequest(settionID));
                 break;
             case R.id.modevideo:
+                logAppend(TheataRequest.getModeRequest(true, settionID) + "\n", false);
                 sendRequest(TheataRequest.getModeRequest(true, settionID));
                 break;
             case R.id.modecamera:
+                logAppend(TheataRequest.getModeRequest(false, settionID) + "\n", false);
                 sendRequest(TheataRequest.getModeRequest(false, settionID));
                 break;
             case R.id.rec:
+                logAppend(TheataRequest.getStartcaptureRequest(settionID) + "\n", false);
                 sendRequest(TheataRequest.getStartcaptureRequest(settionID));
                 break;
             case R.id.stop:
+                logAppend(TheataRequest.getStopcaptureRequest(settionID) + "\n", false);
                 sendRequest(TheataRequest.getStopcaptureRequest(settionID));
+                break;
+            case R.id.button:
+                logAppend("", true);
                 break;
         }
     }
@@ -149,10 +189,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
-    private class timeKeeper extends Thread {
+    private class TimeKeeper extends Thread {
         public static final long SLEEP_TIME_SECONDS = 120;
 
-        public timeKeeper() {
+        public TimeKeeper() {
             try {
                 Thread.sleep(1000 * SLEEP_TIME_SECONDS);
 
@@ -163,6 +203,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void refleshSession() {
+        logAppend(TheataRequest.getConnectRequest() + "\n", false);
         sendRequest(TheataRequest.getConnectRequest());
     }
 
