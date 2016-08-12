@@ -1,6 +1,7 @@
 package nittcprocon.thetasremote;
 
 import android.content.Context;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Html;
@@ -23,9 +24,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.sql.Time;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private static String settionID = "SID_0001";
+    public static final long SLEEP_TIME_SECONDS = 120;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,9 +44,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         logAppend(TheataRequest.getConnectRequest(), false);
         sendRequest(TheataRequest.getConnectRequest());
+        autoRefreshSettion();//autorefresh session
 
-//        new TimeKeeper().start();//自動でsessionIDをリフレッシュ
+    }
 
+    public void autoRefreshSettion() {
+
+        final Handler handler = new Handler();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    // マルチスレッドにしたい処理 ここから
+                    try {
+                        Thread.sleep(1000 * SLEEP_TIME_SECONDS);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            refleshSession();
+                        }
+                    });
+                }
+                // マルチスレッドにしたい処理 ここまで
+            }
+        }).start();
     }
 
     /**
@@ -196,21 +224,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
-    private class TimeKeeper extends Thread {
-        public static final long SLEEP_TIME_SECONDS = 120;
-
-        public TimeKeeper() {
-            try {
-                Thread.sleep(1000 * SLEEP_TIME_SECONDS);
-
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
 
     public void refleshSession() {
-        logAppend(TheataRequest.getConnectRequest(), false);
+        logAppend("<font color=\"Green\">" + TheataRequest.getConnectRequest() + "</font>", false);
         sendRequest(TheataRequest.getConnectRequest());
     }
 
