@@ -13,12 +13,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
   -->
-<LinearLayout
-      xmlns:android="http://schemas.android.com/apk/res/android"
-      android:orientation="vertical"
-      android:layout_width="match_parent"
-      android:layout_height="match_parent"
-      android:id="@+id/sample_main_layout">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/sample_main_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
 
     <!--
@@ -33,43 +32,61 @@
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:text="STOP" />
+
     <ImageButton
+        android:id="@+id/rec"
         android:layout_width="match_parent"
         android:layout_height="120dp"
-        android:id="@+id/rec"
         android:layout_gravity="left|bottom"
         android:src="@android:drawable/ic_media_play" />
 
     <ImageButton
+        android:id="@+id/modevideo"
         android:layout_width="match_parent"
         android:layout_height="76dp"
-        android:id="@+id/modevideo"
         android:layout_gravity="right|top"
         android:src="@android:drawable/ic_menu_slideshow" />
+
+    <Button
+        android:id="@+id/reconnect"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:text="reconnect" />
 
     <ViewAnimator
         android:id="@+id/sample_output"
         android:layout_width="match_parent"
-        android:layout_height="0px"
-        android:layout_weight="1">
+        android:minHeight="250dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#aaaaaa">
+
         <fragment
-              android:name="com.example.android.common.logger.LogFragment"
-              android:id="@+id/log_fragment"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent" />
+            android:id="@+id/log_fragment"
+            android:name="com.example.android.common.logger.LogFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
     </ViewAnimator>
 
+    <Button
+        android:id="@+id/clearlog"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:text="clearLog" />
+
+
     <View
-          android:layout_width="match_parent"
-          android:layout_height="1dp"
-          android:background="@android:color/darker_gray" />
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/darker_gray" />
 
     <FrameLayout
-          android:id="@+id/sample_content_fragment"
-          android:layout_weight="2"
-          android:layout_width="match_parent"
-          android:layout_height="0px" />
+        android:id="@+id/sample_content_fragment"
+        android:layout_width="match_parent"
+        android:layout_height="0px"
+        android:layout_weight="2" />
+
 
 </LinearLayout>
 

@@ -36,8 +36,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.ScrollView;
-import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewAnimator;
 
@@ -102,10 +100,12 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
         // ボタンを設定
         //Button startWriting = (Button)findViewById(R.id.startWritingButton);
         ((Button) findViewById(R.id.stopWritingButton)).setOnClickListener(this);
+        ((Button) findViewById(R.id.clearlog)).setOnClickListener(this);
+        ((Button) findViewById(R.id.reconnect)).setOnClickListener(this);
         ((ImageButton) findViewById(R.id.rec)).setOnClickListener(this);
         ((ImageButton) findViewById(R.id.modevideo)).setOnClickListener(this);
         autoRefreshSettion();
-        
+
     }
 
     public void autoRefreshSettion() {
@@ -257,25 +257,25 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
     }
 
     /**
-     * ログを吐きます
+     * htmlタグを使ってログを履く
      *
      * @param text
      * @param isclear
      */
-    public void logAppend(String text, boolean isclear) {
+    public void logHTML(String text, boolean isclear) {
         LogFragment logFragment = (LogFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.log_fragment);
         if (isclear) {
             logFragment.getLogView().setText("");
-            logFragment.getLogView().append(Html.fromHtml(text + "<br>"));
+            logFragment.getLogView().append(Html.fromHtml("<br>" + text));
         } else {
-            logFragment.getLogView().append(Html.fromHtml(text + "<br>"));
+            logFragment.getLogView().append(Html.fromHtml("<br>" + text));
         }
     }
 
 
     public void refleshSession() {
-        logAppend("<font color=\"Green\">" + ThetaRequest.getConnectRequest() + "</font>", false);
+        logHTML("<font color=\"Green\">" + ThetaRequest.getConnectRequest() + "</font>", false);
         sendRequest(ThetaRequest.getConnectRequest());
     }
 
@@ -366,8 +366,14 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
                 break;
 
             case R.id.modevideo:
-                logAppend(ThetaRequest.getModeRequest(true, settionID), false);
+                logHTML(ThetaRequest.getModeRequest(true, settionID), false);
                 sendRequest(ThetaRequest.getModeRequest(true, settionID));
+                break;
+            case R.id.clearlog:
+                logHTML("", true);
+                break;
+            case R.id.reconnect:
+                refleshSession();
                 break;
         }
     }
@@ -415,15 +421,15 @@ public class SensorMainActivity extends SampleActivityBase implements SensorEven
             try {
                 if (isSessionId(s)) {
                     JSONObject jsonObject = new JSONObject(s);
-                    logAppend("<font color=\"Green\">" + s + "</font>", false);
+                    logHTML("<font color=\"Green\">" + s + "</font>", false);
                     settionID = jsonObject.getString("sessionId");
-                    logAppend("セッション更新", false);
+                    logHTML("セッション更新", false);
                 } else if (isInvalidSessionId(s)) {
-                    logAppend("<font color=\"Red\">" + s + "</font>", false);
-                    logAppend("<font color=\"Red\">" + "セッションの更新します" + "</font>", false);
+                    logHTML("<font color=\"Red\">" + s + "</font>", false);
+                    logHTML("<font color=\"Red\">" + "セッションの更新します" + "</font>", false);
                     refleshSession();
                 } else if (s.contains("CATCH ERROR::")) {
-                    logAppend("<font color=\"Red\">" + s + "</font>", false);
+                    logHTML("<font color=\"Red\">" + s + "</font>", false);
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
