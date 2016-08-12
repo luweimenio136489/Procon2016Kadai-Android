@@ -41,15 +41,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ((ImageButton) findViewById(R.id.rec)).setOnClickListener(this);
         ((ImageButton) findViewById(R.id.stop)).setOnClickListener(this);
         ((Button) findViewById(R.id.button)).setOnClickListener(this);
-
-        logAppend(TheataRequest.getConnectRequest(), false);
-        sendRequest(TheataRequest.getConnectRequest());
         autoRefreshSettion();//autorefresh session
 
     }
 
     public void autoRefreshSettion() {
-
+        refleshSession();
         final Handler handler = new Handler();
         new Thread(new Runnable() {
             @Override
