@@ -13,25 +13,60 @@
         android:id="@+id/initButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="init"
-        android:textSize="30dp"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true" />
-    <Button
-        android:id="@+id/startButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="START"
-        android:textSize="50dp"
-        android:layout_centerVertical="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_gravity="right|top"
+        android:src="@android:drawable/ic_menu_slideshow"
+        android:text="@string/set_videoMode" />
 
-    <Button
-        android:id="@+id/stopButton"
+    <LinearLayout
+        android:id="@+id/layout"
+        android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="STOP"
-        android:textSize="30dp"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true" />
+        android:layout_below="@+id/initButton"
+        android:layout_alignParentStart="true"
+        android:layout_toEndOf="@+id/reconnect"
+        android:layout_toRightOf="@+id/reconnect">
+
+        <ImageButton
+            android:id="@+id/startButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:src="@android:drawable/ic_media_play"
+            android:layout_alignParentStart="true"/>
+
+        <ImageButton
+            android:id="@+id/stopButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:src="@android:drawable/ic_media_pause" />
+
+    </LinearLayout>
+    <Button
+        android:id="@+id/reconnect"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right|top"
+        android:src="@android:drawable/ic_menu_slideshow"
+        android:layout_below="@+id/layout"
+        android:text="@string/reconnect" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Medium Text"
+        android:id="@+id/sensorValue"
+        android:layout_centerVertical="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/reconnect"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Medium Text"
+        android:id="@+id/attitudeVale"
+        android:layout_weight="1"
+        android:layout_centerVertical="true"
+        android:layout_alignParentStart="true" />
 </RelativeLayout>
