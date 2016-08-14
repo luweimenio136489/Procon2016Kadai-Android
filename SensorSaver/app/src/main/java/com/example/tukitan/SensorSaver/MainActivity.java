@@ -58,8 +58,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private LogView logView; //ログ
     private static String settionID = "SID_0000"; //http通信側のsessionID
     public static final long SLEEP_TIME_SECONDS = 120; ///sessionIDの更新間隔
-
-    //MediaRecorder recorder;
+    private double[] initalizeAttitude = new double[2];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,12 +87,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         autoRefreshSettion();
 
-        /*recorder = new MediaRecorder();
-        recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
-        soundFile = Environment.getExternalStorageDirectory() + "/SynchroAthlete/sound.3gp";
-        recorder.setOutputFile(soundFile);*/
     }
     /**
      * セッションの自動更新
@@ -174,7 +167,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 String viewString = String.format("X axis:%.2f  ", accel[0]) + String.format("Y axis:%.2f  ", accel[2])
                         + String.format("Z axis:%.2f", accel[1]);
                 attitude = getAttitude(accel);
-                String attitudeString = String.format("X axis:%.3f ,Z axis:%.3f",attitude[0]*Rad2Dec,attitude[1]*Rad2Dec);
+                gravity = Math.sqrt(accel[0]*accel[0] + accel[1]*accel[1] + accel[2]*accel[2]);
+                String attitudeString = String.format("X axis:%.3f ,Z axis:%.3f ,gravity:%.3f",attitude[0]*Rad2Dec,attitude[1]*Rad2Dec,gravity);
                 sValue.setText(viewString);
                 aValue.setText(attitudeString);
                 break;
@@ -222,7 +216,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     writeFileInit();
                     startTime = System.currentTimeMillis();
                     (new Thread(new inputData())).start();
-                    //recordSound();
                     Toast.makeText(this, "書き込みを開始しました", Toast.LENGTH_SHORT).show();
                     sendRequest(ThetaRequest.getStartcaptureRequest(settionID));
                     isInited = false;
@@ -233,6 +226,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 Toast.makeText(this, "初期化しました", Toast.LENGTH_SHORT).show();
                 logHTML(ThetaRequest.getModeRequest(true, settionID), false);
                 sendRequest(ThetaRequest.getModeRequest(true, settionID));
+                initalizeAttitude[0] = attitude[0];
+                initalizeAttitude[1] = attitude[1];
                 isInited = true;
                 break;
 
@@ -240,8 +235,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 whiteState = false;
                 Toast.makeText(this, "書き込みを停止しました", Toast.LENGTH_SHORT).show();
                 sendRequest(ThetaRequest.getStopcaptureRequest(settionID));
-                //recorder.stop();
-                //recorder.reset();
                 break;
 
             case R.id.reconnect:
@@ -253,17 +246,21 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     // データをストレージへ出力
     synchronized public void inputText() {
-        String getData = System.currentTimeMillis() - startTime
-                + accel[0] + "," + accel[1] + "," + accel[2]
-                + magnetic[0] + "," + magnetic[1] + "," + magnetic[2]
+
+        String getData = System.currentTimeMillis() - startTime + "," +
+                + accel[0] + "," + accel[1] + "," + accel[2] + "," +
+                + magnetic[0] + "," + magnetic[1] + "," + magnetic[2] + "," +
                 + gyro[0] + "," + gyro[1] + "," + gyro[2] + "\r\n";
 
-        String outputAttitude = System.currentTimeMillis() -startTime
-                + attitude[0] * Rad2Dec + "," + attitude[1] * Rad2Dec
-                + gravity;
-
+        String outputAttitude = System.currentTimeMillis() -startTime + "," +
+                + (attitude[0] - initalizeAttitude[0] )* Rad2Dec + "," + (attitude[1] - initalizeAttitude[1])* Rad2Dec + "," +
+                + gravity + "\r\n";
+        FileOutputStream fos = null;
         FileOutputStream fos2 = null;
         try {
+            fos = new FileOutputStream(file, true);
+            fos.write(outputAttitude.getBytes());
+            fos.close();
             fos2 = new FileOutputStream(dataFile, true);
             fos2.write(getData.getBytes());
             fos2.close();
@@ -293,7 +290,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             FileOutputStream fos = new FileOutputStream(file);
             FileOutputStream fos2 = new FileOutputStream(dataFile);
             fos.write("write hedder infomations here.\r\n".getBytes());
-            fos2.write("Writing Sensor Data.\r\n".getBytes());
+            fos2.write("Time,Xaccel,Yaccel,Zaccel,Xmagnetic,Ymagnetic,Zmegnetic,Xgyro,Ygyro,Zgyro .\r\n".getBytes());
             fos.close();
             fos2.close();
         } catch (FileNotFoundException e) {
@@ -302,16 +299,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             e.printStackTrace();
         }
     }
-
-    /*　録音の開始
-    private void recordSound(){
-        try {
-            recorder.prepare();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        recorder.start();   //録音開始
-    }*/
 
     // データを出力するスレッド
     private class inputData implements Runnable {
