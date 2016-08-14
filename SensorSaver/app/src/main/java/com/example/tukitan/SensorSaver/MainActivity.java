@@ -7,6 +7,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
@@ -49,6 +50,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private double[] attitude = new double[2];
     double gravity;
     File file, dataFile;
+    String soundFile;
     boolean isInited = false;
     private static boolean whiteState = false;
     long startTime;
@@ -56,6 +58,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private LogView logView; //ログ
     private static String settionID = "SID_0000"; //http通信側のsessionID
     public static final long SLEEP_TIME_SECONDS = 120; ///sessionIDの更新間隔
+
+    //MediaRecorder recorder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,8 +85,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         LogFragment logFragment = (LogFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.log_fragment);
         logView = logFragment.getLogView();
+
         autoRefreshSettion();
 
+        /*recorder = new MediaRecorder();
+        recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
+        soundFile = Environment.getExternalStorageDirectory() + "/SynchroAthlete/sound.3gp";
+        recorder.setOutputFile(soundFile);*/
     }
     /**
      * セッションの自動更新
@@ -211,6 +222,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     writeFileInit();
                     startTime = System.currentTimeMillis();
                     (new Thread(new inputData())).start();
+                    //recordSound();
                     Toast.makeText(this, "書き込みを開始しました", Toast.LENGTH_SHORT).show();
                     sendRequest(ThetaRequest.getStartcaptureRequest(settionID));
                     isInited = false;
@@ -228,6 +240,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 whiteState = false;
                 Toast.makeText(this, "書き込みを停止しました", Toast.LENGTH_SHORT).show();
                 sendRequest(ThetaRequest.getStopcaptureRequest(settionID));
+                //recorder.stop();
+                //recorder.reset();
                 break;
 
             case R.id.reconnect:
@@ -263,17 +277,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     synchronized private double[] getAttitude(float accelData[]) {
         // attitude[0]:X軸に対する回転角　attitude[1]:Y軸に対する回転角
         double attitude[] = new double[2];
-        // 無理やり計算しています
-        if (9.8<Math.abs(accelData[0])) {
-            if(accelData[0]> 9.8) accelData[0] = (float)9.8;
-            else accelData[0] = (float)-9.8;
-        }
-        if (9.8<Math.abs(accelData[1])) {
-            if(accelData[1]> 9.8) accelData[1] = (float)9.8;
-            else accelData[1] = (float)-9.8;
-        }
-        attitude[0] = Math.asin(accelData[1]/9.81);
-        attitude[1] = Math.asin(accelData[0]/9.81);
+
+        attitude[0] = Math.atan(accelData[1]/accelData[2]);
+        attitude[1] = Math.atan(accelData[0]/accelData[2]);
         return attitude;
     }
 
@@ -296,6 +302,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             e.printStackTrace();
         }
     }
+
+    /*　録音の開始
+    private void recordSound(){
+        try {
+            recorder.prepare();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        recorder.start();   //録音開始
+    }*/
 
     // データを出力するスレッド
     private class inputData implements Runnable {
