@@ -67,6 +67,33 @@
         android:text="Medium Text"
         android:id="@+id/attitudeVale"
         android:layout_weight="1"
-        android:layout_centerVertical="true"
+        android:layout_below="@+id/sensorValue"
         android:layout_alignParentStart="true" />
+    <ViewAnimator
+        android:id="@+id/sample_output"
+        android:layout_width="match_parent"
+        android:layout_height="110dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:background="#aaaaaa"
+        android:minHeight="250dp"
+        android:layout_below="@+id/attitudeVale">
+
+        <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true">
+            <fragment
+                android:id="@+id/log_fragment"
+                android:name="com.example.tukitan.SensorSaver.LogFragment"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="right|center_vertical"
+                android:layout_margin="10dp" />
+        </FrameLayout>
+    </ViewAnimator>
+
+
 </RelativeLayout>

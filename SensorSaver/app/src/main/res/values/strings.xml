@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">SensorViewer</string>
+    <string name="app_name">SensorSaver</string>
     <string name="set_videoMode">初期化</string>
     <string name="reconnect">再接続</string>
 </resources>
