@@ -167,7 +167,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 String viewString = String.format("X axis:%.2f  ", accel[0]) + String.format("Y axis:%.2f  ", accel[2])
                         + String.format("Z axis:%.2f", accel[1]);
                 attitude = getAttitude(accel);
-                gravity = Math.sqrt(accel[0]*accel[0] + accel[1]*accel[1] + accel[2]*accel[2]);
+                gravity = getGravity(accel,attitude);
                 String attitudeString = String.format("X axis:%.3f ,Z axis:%.3f ,gravity:%.3f",attitude[0]*Rad2Dec,attitude[1]*Rad2Dec,gravity);
                 sValue.setText(viewString);
                 aValue.setText(attitudeString);
@@ -251,9 +251,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 + accel[0] + "," + accel[1] + "," + accel[2] + "," +
                 + magnetic[0] + "," + magnetic[1] + "," + magnetic[2] + "," +
                 + gyro[0] + "," + gyro[1] + "," + gyro[2] + "\r\n";
-
+        ;
         String outputAttitude = System.currentTimeMillis() -startTime + "," +
-                + (attitude[0] - initalizeAttitude[0] )* Rad2Dec + "," + (attitude[1] - initalizeAttitude[1])* Rad2Dec + "," +
+                + (attitude[0] - initalizeAttitude[0] ) + "," + (attitude[1] - initalizeAttitude[1]) + "," +
                 + gravity + "\r\n";
         FileOutputStream fos = null;
         FileOutputStream fos2 = null;
@@ -280,6 +280,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         return attitude;
     }
 
+    synchronized  private double getGravity (float[] accelData ,double[] slope){
+        double answer;
+        double XYvector = Math.sqrt(accelData[0]*accelData[0] + accelData[2]*accelData[2]);
+        answer = Math.sqrt(XYvector*XYvector + accelData[1]*accelData[1]);
+        answer = answer - 9.8;
+        return answer;
+    }
+
     private void writeFileInit(){
         try {
             //最初の一行目に"write hedder infomations here"と書く
@@ -289,7 +297,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
              */
             FileOutputStream fos = new FileOutputStream(file);
             FileOutputStream fos2 = new FileOutputStream(dataFile);
-            fos.write("write hedder infomations here.\r\n".getBytes());
+            fos.write("DataNum,0.016,offset.\r\n".getBytes());
             fos2.write("Time,Xaccel,Yaccel,Zaccel,Xmagnetic,Ymagnetic,Zmegnetic,Xgyro,Ygyro,Zgyro .\r\n".getBytes());
             fos.close();
             fos2.close();
