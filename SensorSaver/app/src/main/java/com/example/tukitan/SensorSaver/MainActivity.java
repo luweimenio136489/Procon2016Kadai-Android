@@ -66,9 +66,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_get_sensor_value);
         sensor_manager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 101);
-
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.RECORD_AUDIO}, 100);
         // ボタンを設定
         ((ImageButton) findViewById(R.id.startButton)).setOnClickListener(this);
         ((ImageButton) findViewById(R.id.stopButton)).setOnClickListener(this);
@@ -198,24 +196,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         //パーミッションの確認
-        if (requestCode == 100) {
-
+        if (requestCode ==100) {
             //許可をくれるまでパーミッション許可のアラートダイアログを出し続ける
             if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, "Please allow permission", Toast.LENGTH_LONG).show();
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.RECORD_AUDIO}, 100);
             }
         }
-        if (requestCode == 101) {
-
-            //許可をくれるまでパーミッション許可のアラートダイアログを出し続ける
-            if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Please allow permission", Toast.LENGTH_LONG).show();
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 101);
-            }
-        }
-
-
     }
 
     @Override
