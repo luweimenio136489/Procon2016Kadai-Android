@@ -13,6 +13,7 @@ import android.os.AsyncTask;
 import android.os.Environment;
 import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Html;
@@ -23,9 +24,6 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.appindexing.Action;
-import com.google.android.gms.appindexing.AppIndex;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -60,12 +58,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public static final long SLEEP_TIME_SECONDS = 120; ///sessionIDの更新間隔
     private double[] initalizeAttitude = new double[2];
 
+    private MediaRecorder mediarecorder; //録音用のメディアレコーダークラス
+    static final String filePath = Environment.getExternalStorageDirectory() + "/SynchroAthlete/soundData.wav"; //録音用のファイルパス
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_get_sensor_value);
         sensor_manager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 101);
 
         // ボタンを設定
         ((ImageButton) findViewById(R.id.startButton)).setOnClickListener(this);
@@ -84,7 +86,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         LogFragment logFragment = (LogFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.log_fragment);
         logView = logFragment.getLogView();
-
         autoRefreshSettion();
 
     }
@@ -205,6 +206,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
             }
         }
+        if (requestCode == 101) {
+
+            //許可をくれるまでパーミッション許可のアラートダイアログを出し続ける
+            if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Please allow permission", Toast.LENGTH_LONG).show();
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 101);
+            }
+        }
+
+
     }
 
     @Override
@@ -212,12 +223,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         switch (v.getId()) {
             case R.id.startButton:
                 if (isInited) {
+                    sendRequest(ThetaRequest.getStartcaptureRequest(settionID));
                     whiteState = true;
                     writeFileInit();
                     startTime = System.currentTimeMillis();
                     (new Thread(new inputData())).start();
                     Toast.makeText(this, "書き込みを開始しました", Toast.LENGTH_SHORT).show();
-                    sendRequest(ThetaRequest.getStartcaptureRequest(settionID));
+                    startMediaRecord();
                     isInited = false;
                 } else Toast.makeText(this, "先に初期化をしてください", Toast.LENGTH_SHORT).show();
                 break;
@@ -232,9 +244,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 break;
 
             case R.id.stopButton:
+                sendRequest(ThetaRequest.getStopcaptureRequest(settionID));
                 whiteState = false;
                 Toast.makeText(this, "書き込みを停止しました", Toast.LENGTH_SHORT).show();
-                sendRequest(ThetaRequest.getStopcaptureRequest(settionID));
+                stopRecord();
                 break;
 
             case R.id.reconnect:
@@ -305,6 +318,48 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void startMediaRecord(){
+        try{
+            File mediafile = new File(filePath);
+            if(mediafile.exists()) {
+                //ファイルが存在する場合は削除する
+                mediafile.delete();
+            }
+            mediafile = null;
+            mediarecorder = new MediaRecorder();
+            //音声のサンプリング周波数
+            mediarecorder.setAudioSamplingRate(48000);
+            //マイクからの音声を録音する
+            mediarecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            //ファイルへの出力フォーマット DEFAULTにするとwavが扱えるはず
+            mediarecorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);
+            //音声のエンコーダーも合わせてdefaultにする
+            mediarecorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
+            //ファイルの保存先を指定
+            mediarecorder.setOutputFile(filePath);
+            //録音の準備をする
+            mediarecorder.prepare();
+            //録音開始
+            mediarecorder.start();
+        } catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    private void stopRecord(){
+        if(mediarecorder == null){
+            Toast.makeText(MainActivity.this, "mediarecorder = null", Toast.LENGTH_SHORT).show();
+        }else{
+            try{
+                //録音停止
+                mediarecorder.stop();
+                mediarecorder.reset();
+            }catch (Exception e){
+                e.printStackTrace();
+            }
         }
     }
 
