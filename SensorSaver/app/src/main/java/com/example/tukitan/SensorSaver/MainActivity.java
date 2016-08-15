@@ -318,13 +318,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             mediafile = null;
             mediarecorder = new MediaRecorder();
             //音声のサンプリング周波数
-            mediarecorder.setAudioSamplingRate(48000);
+            mediarecorder.setAudioSamplingRate(44100);
             //マイクからの音声を録音する
             mediarecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
             //ファイルへの出力フォーマット DEFAULTにするとwavが扱えるはず
             mediarecorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);
             //音声のエンコーダーも合わせてdefaultにする
-            mediarecorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
+            mediarecorder.setAudioEncoder(MediaRecorder.AudioEncoder.HE_AAC);
+            //エンコーディングのビットレートを指定
+            mediarecorder.setAudioEncodingBitRate(16);
             //ファイルの保存先を指定
             mediarecorder.setOutputFile(filePath);
             //録音の準備をする
