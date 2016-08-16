@@ -38,6 +38,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener, View.OnClickListener {
 
@@ -47,6 +48,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private float[] magnetic = new float[3];
     private float[] gyro = new float[3];
     private double[] attitude = new double[2];
+    private int playCount = 0;
     double gravity;
     File file, dataFile;
     String soundFile;
@@ -59,12 +61,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public static final long SLEEP_TIME_SECONDS = 120; ///sessionIDの更新間隔
     private double[] initalizeAttitude = new double[2];
 
+    Calendar calender;
+
     private static final int SAMPLE_RATE = 22050;
     private static final int BITRATE = 128000;
 
 
     private MediaRecorder mediarecorder; //録音用のメディアレコーダークラス
-    static final String filePath = Environment.getExternalStorageDirectory() + "/SynchroAthlete/soundData.wav"; //録音用のファイルパス
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,14 +85,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         /*sValue = (TextView) findViewById(R.id.sensorValue);
         aValue = (TextView) findViewById(R.id.attitudeVale);*/
 
-        //SDカードへのpathを準備
-        file = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/test.txt");
-        dataFile = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/sensorData.txt");
-        file.getParentFile().mkdir();
-
         LogFragment logFragment = (LogFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.log_fragment);
         logView = logFragment.getLogView();
+
+        calender = Calendar.getInstance();
         autoRefreshSettion();
 
     }
@@ -198,6 +199,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
+
+    }
+
 
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         //パーミッションの確認
@@ -252,6 +259,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     // データをストレージへ出力
     synchronized public void inputText() {
 
+        String now = "_" + (calender.get(Calendar.MONTH) +1) + "_" + calender.get(Calendar.DAY_OF_MONTH) + "_"
+                + calender.get(Calendar.HOUR_OF_DAY) + "_" +calender.get(Calendar.MINUTE);
+        file = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/attitude" + now + ".txt");
+        dataFile = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/sensorData" + now + ".txt");
+
         String getData = System.currentTimeMillis() - startTime + "," +
                 + accel[0] + "," + accel[1] + "," + accel[2] + "," +
                 + magnetic[0] + "," + magnetic[1] + "," + magnetic[2] + "," +
@@ -300,6 +312,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
              * fos:傾きを記録するファイル
              * fos2:9軸センサのデータをそのまま保存するファイル
              */
+            String now = "_" + (calender.get(Calendar.MONTH) + 1) + "_" + calender.get(Calendar.DAY_OF_MONTH) + "_"
+                    + calender.get(Calendar.HOUR_OF_DAY) + "_" +calender.get(Calendar.MINUTE);
+            file = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/attitude" + now + ".txt");
+            dataFile = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/sensorData" + now + ".txt");
+
+            //SDカードへのpathを準備
+            file.getParentFile().mkdir();
+
             FileOutputStream fos = new FileOutputStream(file);
             FileOutputStream fos2 = new FileOutputStream(dataFile);
             fos.write("DataNum,0.016,offset.\r\n".getBytes());
@@ -315,6 +335,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void startMediaRecord(){
         try{
+            String now = "_" + (calender.get(Calendar.MONTH) + 1) + "_" + calender.get(Calendar.DAY_OF_MONTH) + "_"
+                    + calender.get(Calendar.HOUR_OF_DAY) + "_" +calender.get(Calendar.MINUTE);
+            String filePath = Environment.getExternalStorageDirectory() + "/SynchroAthlete/soundData"
+                    + now +".wav"; //録音用のファイルパス
             File mediafile = new File(filePath);
             if(mediafile.exists()) {
                 //ファイルが存在する場合は削除する
