@@ -7,22 +7,17 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.media.AudioFormat;
 import android.media.MediaRecorder;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Html;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.squareup.okhttp.MediaType;
@@ -258,20 +253,22 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     // データをストレージへ出力
     synchronized public void inputText() {
-
+        String[] str = new String[2];
+        for(int i=0;i<2;i++){
+            str[i] = String.format("%.4f",attitude[i] - initalizeAttitude[i]);
+        }
         String now = "_" + (calender.get(Calendar.MONTH) +1) + "_" + calender.get(Calendar.DAY_OF_MONTH) + "_"
                 + calender.get(Calendar.HOUR_OF_DAY) + "_" +calender.get(Calendar.MINUTE);
         file = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/attitude" + now + ".txt");
         dataFile = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/sensorData" + now + ".txt");
 
         String getData = System.currentTimeMillis() - startTime + "," +
-                + accel[0] + "," + accel[1] + "," + accel[2] + "," +
-                + magnetic[0] + "," + magnetic[1] + "," + magnetic[2] + "," +
-                + gyro[0] + "," + gyro[1] + "," + gyro[2] + "\r\n";
+                String.format("%.5f",accel[0]) + "," + String.format("%.5f",accel[1]) + "," + String.format("%.5f",accel[2]) + "," +
+                String.format("%.5f",magnetic[0]) + "," + String.format("%.5f",magnetic[1]) + "," + String.format("%.5f",magnetic[2]) + "," +
+                String.format("%.5f",gyro[0]) + "," + String.format("%.5f",gyro[1]) + "," + String.format("%.5f",gyro[2]) + "\r\n";
         ;
         String outputAttitude = System.currentTimeMillis() -startTime + "," +
-                + (attitude[0] - initalizeAttitude[0] ) + "," + (attitude[1] - initalizeAttitude[1]) + "," +
-                + gravity + "\r\n";
+                str[0] + "," + str[1] + "," + String.format("%.4f",gravity) + "\r\n";
         FileOutputStream fos = null;
         FileOutputStream fos2 = null;
         try {
