@@ -9,6 +9,14 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".MainActivity">
 
+
+    <SurfaceView
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:id="@+id/isConnect"
+        android:layout_below="@+id/reconnect"
+        android:background="#ff0000"
+        android:layout_alignParentStart="true" />
     <Button
         android:id="@+id/initButton"
         android:layout_width="match_parent"
@@ -51,6 +59,8 @@
         android:src="@android:drawable/ic_menu_slideshow"
         android:layout_below="@+id/layout"
         android:text="@string/reconnect" />
+
+
     <!--
     <TextView
         android:layout_width="wrap_content"
@@ -69,7 +79,7 @@
         android:id="@+id/attitudeVale"
         android:layout_weight="1"
         android:layout_below="@+id/sensorValue"
-        android:layout_alignParentStart="true" /> -->
+        android:layout_alignParentStart="true" />
     <ViewAnimator
         android:id="@+id/sample_output"
         android:layout_width="match_parent"
@@ -93,8 +103,14 @@
                 android:layout_height="match_parent"
                 android:layout_gravity="right|center_vertical"
                 android:layout_margin="10dp" />
+
+            <TextClock
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/textClock"
+                android:layout_gravity="right|top" />
         </FrameLayout>
-    </ViewAnimator>
+    </ViewAnimator> -->
 
 
 </RelativeLayout>

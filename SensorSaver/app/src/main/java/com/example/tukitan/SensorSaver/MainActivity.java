@@ -3,6 +3,7 @@ package com.example.tukitan.SensorSaver;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -15,6 +16,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Html;
+import android.view.Surface;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -56,6 +58,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public static final long SLEEP_TIME_SECONDS = 120; ///sessionIDの更新間隔
     private double[] initalizeAttitude = new double[2];
 
+    View surface;
     Calendar calender;
 
     private static final int SAMPLE_RATE = 22050;
@@ -76,13 +79,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         ((ImageButton) findViewById(R.id.stopButton)).setOnClickListener(this);
         ((Button) findViewById(R.id.initButton)).setOnClickListener(this);
         ((Button) findViewById(R.id.reconnect)).setOnClickListener(this);
-
+        surface = findViewById(R.id.isConnect);
         /*sValue = (TextView) findViewById(R.id.sensorValue);
         aValue = (TextView) findViewById(R.id.attitudeVale);*/
 
-        LogFragment logFragment = (LogFragment) getSupportFragmentManager()
+        /*LogFragment logFragment = (LogFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.log_fragment);
-        logView = logFragment.getLogView();
+        logView = logFragment.getLogView();*/
 
         calender = Calendar.getInstance();
         autoRefreshSettion();
@@ -137,10 +140,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     /**
      * htmlタグを使ってログを履く
      *
-     * @param text
-     * @param isclear
      */
-    public void logHTML(String text, boolean isclear) {
+    /*public void logHTML(String text, boolean isclear) {
 
         if (isclear) {
             logView.setText("");
@@ -148,7 +149,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         } else {
             logView.append(Html.fromHtml("<br>" + text));
         }
-    }
+    }*/
     protected void onResume() {
         super.onResume();
 
@@ -230,7 +231,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
             case R.id.initButton:
                 Toast.makeText(this, "初期化しました", Toast.LENGTH_SHORT).show();
-                logHTML(ThetaRequest.getModeRequest(true, settionID), false);
+                //logHTML(ThetaRequest.getModeRequest(true, settionID), false);
                 sendRequest(ThetaRequest.getModeRequest(true, settionID));
                 initalizeAttitude[0] = attitude[0];
                 initalizeAttitude[1] = attitude[1];
@@ -431,21 +432,25 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 //                return result;
         }
 
+
+
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
             try {
                 if (isSessionId(s)) {
                     JSONObject jsonObject = new JSONObject(s);
-                    logHTML("<font color=\"Green\">" + s + "</font>", false);
+                    //logHTML("<font color=\"Green\">" + s + "</font>", false);
                     settionID = jsonObject.getJSONObject("results").getString("sessionId");
-                    logHTML("セッション更新", false);
+                    //logHTML("セッション更新", false);
+                    surface.setBackgroundColor(Color.GREEN);
                 } else if (isInvalidSessionId(s)) {
-                    logHTML("<font color=\"Red\">" + s + "</font>", false);
-                    logHTML("<font color=\"Red\">" + "セッションの更新します" + "</font>", false);
+                    //logHTML("<font color=\"Red\">" + s + "</font>", false);
+                    //logHTML("<font color=\"Red\">" + "セッションの更新します" + "</font>", false);
                     refleshSession();
                 } else if (s.contains("CATCH ERROR")) {
-                    logHTML("<font color=\"Red\">" + s + "</font>", false);
+                    //logHTML("<font color=\"Red\">" + s + "</font>", false);
+                    surface.setBackgroundColor(Color.RED);
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
