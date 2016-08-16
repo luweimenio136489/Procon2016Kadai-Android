@@ -7,6 +7,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.AudioFormat;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -52,11 +53,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     boolean isInited = false;
     private static boolean whiteState = false;
     long startTime;
-    TextView sValue,aValue;
+    //TextView sValue,aValue;
     private LogView logView; //ログ
     private static String settionID = "SID_0000"; //http通信側のsessionID
     public static final long SLEEP_TIME_SECONDS = 120; ///sessionIDの更新間隔
     private double[] initalizeAttitude = new double[2];
+
+    private static final int SAMPLE_RATE = 22050;
+    private static final int BITRATE = 128000;
+
 
     private MediaRecorder mediarecorder; //録音用のメディアレコーダークラス
     static final String filePath = Environment.getExternalStorageDirectory() + "/SynchroAthlete/soundData.wav"; //録音用のファイルパス
@@ -73,8 +78,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         ((Button) findViewById(R.id.initButton)).setOnClickListener(this);
         ((Button) findViewById(R.id.reconnect)).setOnClickListener(this);
 
-        sValue = (TextView) findViewById(R.id.sensorValue);
-        aValue = (TextView) findViewById(R.id.attitudeVale);
+        /*sValue = (TextView) findViewById(R.id.sensorValue);
+        aValue = (TextView) findViewById(R.id.attitudeVale);*/
 
         //SDカードへのpathを準備
         file = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/test.txt");
@@ -163,13 +168,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         switch (event.sensor.getType()) {
             case Sensor.TYPE_ACCELEROMETER:
                 accel = event.values.clone();
-                String viewString = String.format("X axis:%.2f  ", accel[0]) + String.format("Y axis:%.2f  ", accel[2])
-                        + String.format("Z axis:%.2f", accel[1]);
                 attitude = getAttitude(accel);
                 gravity = getGravity(accel,attitude);
+                /*String viewString = String.format("X axis:%.2f  ", accel[0]) + String.format("Y axis:%.2f  ", accel[2])
+                        + String.format("Z axis:%.2f", accel[1]);
                 String attitudeString = String.format("X axis:%.3f ,Z axis:%.3f ,gravity:%.3f",attitude[0]*Rad2Dec,attitude[1]*Rad2Dec,gravity);
                 sValue.setText(viewString);
-                aValue.setText(attitudeString);
+                aValue.setText(attitudeString);*/
                 break;
             case Sensor.TYPE_MAGNETIC_FIELD:
                 magnetic = event.values.clone();
@@ -318,7 +323,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             mediafile = null;
             mediarecorder = new MediaRecorder();
             //音声のサンプリング周波数
-            mediarecorder.setAudioSamplingRate(44100);
+            mediarecorder.setAudioSamplingRate(SAMPLE_RATE);
             //マイクからの音声を録音する
             mediarecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
             //ファイルへの出力フォーマット DEFAULTにするとwavが扱えるはず
@@ -326,7 +331,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             //音声のエンコーダーも合わせてdefaultにする
             mediarecorder.setAudioEncoder(MediaRecorder.AudioEncoder.HE_AAC);
             //エンコーディングのビットレートを指定
-            mediarecorder.setAudioEncodingBitRate(16);
+            mediarecorder.setAudioEncodingBitRate(BITRATE);
             //ファイルの保存先を指定
             mediarecorder.setOutputFile(filePath);
             //録音の準備をする
