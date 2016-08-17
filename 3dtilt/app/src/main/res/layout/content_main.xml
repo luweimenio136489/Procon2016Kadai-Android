@@ -45,7 +45,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
             android:layout_below="@+id/datatext"
-            android:text="センサtest.txt読み込み" />
+            android:text="load txt" />
 
         <ImageButton
             android:id="@+id/startButton"
@@ -56,12 +56,20 @@
             android:src="@android:drawable/ic_media_play" />
 
         <TextView
-            android:id="@+id/textView"
+            android:id="@+id/timeText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="time:"
             android:layout_below="@+id/load"
-            android:layout_toEndOf="@+id/startButton" />
+            android:layout_toEndOf="@+id/startButton"
+            android:text="time:" />
+
+        <TextView
+            android:id="@+id/path"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/load"
+            android:layout_toEndOf="@+id/load"
+            android:text="path" />
     </RelativeLayout>
 
 

@@ -1,11 +1,13 @@
 package airz.a3dtilt;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.Environment;
@@ -13,10 +15,10 @@ import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.CompoundButton;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,13 +28,16 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * 現状OPENGLで端末の傾きor読み込まれたファイルに則って
  * ドロイド君が傾きます．
- * 
+ * <p/>
  * TODO: ファイル読み込み動的に
  * TODO: 加速度対応
  * TODO: グラフ表示
@@ -48,8 +53,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     SensorManager sensorManager;
     public static double roll, azimuth, pitch;
     private Switch isreal;
-    private TextView textView;
-    private File file;
+    private TextView rad, path;
     private List<SensorData> datas = new ArrayList<>();
 
     @Override
@@ -65,11 +69,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         glSurfaceView.setRenderer(new GLRenderer(this));
         isreal = (Switch) findViewById(R.id.isreal);
         isreal.setChecked(true);
-        textView = (TextView) findViewById(R.id.datatext);
+        rad = (TextView) findViewById(R.id.datatext);
+        path = (TextView) findViewById(R.id.path);
+        ((Button) findViewById(R.id.load)).setOnClickListener(this);
+        ((ImageButton) findViewById(R.id.startButton)).setOnClickListener(this);
 
         sensorManager.unregisterListener(this);
-        file = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/test.txt");
-        file.getParentFile().mkdir();
 
 
     }
@@ -141,7 +146,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             azimuth /= 2;//平滑化
             pitch /= 2;//平滑化
             roll /= 2;//平滑化
-            textView.setText("pitch:" + (int) pitch + "\nroll:" + (int) roll + "\nazimuth:" + (int) azimuth);
+            rad.setText("pitch:" + (int) pitch + "\nroll:" + (int) roll + "\nazimuth:" + (int) azimuth);
         }
     }
 
@@ -150,29 +155,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.load:
-                try {
-                    String str;
-                    datas.clear();
-                    SensorData tmpdata;
-                    BufferedReader br = new BufferedReader(new FileReader(file));
-                    while ((str = br.readLine()) != null) {
-                        String[] raw = str.split(",");
-                        tmpdata = new SensorData();
-                        tmpdata.setTime(Integer.parseInt(raw[0]));
-                        tmpdata.setAccel(new float[]{Float.valueOf(raw[1]), Float.valueOf(raw[2]), Float.valueOf(raw[3])});
-                        tmpdata.setMagnetic(new float[]{Float.valueOf(raw[4]), Float.valueOf(raw[5]), Float.valueOf(raw[6])});
-                        tmpdata.setGyro(new float[]{Float.valueOf(raw[7]), Float.valueOf(raw[8]), Float.valueOf(raw[9])});
-                        datas.add(tmpdata);
-                    }
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.setType("text/plain");
+                startActivityForResult(intent, 200);
 
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
                 break;
             case R.id.startButton:
-
+                Log.i("startbutton", "start thread");
+                isreal.setChecked(false);
                 final Handler handler = new Handler();
 
                 new Thread(new Runnable() {
@@ -201,6 +191,43 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     }
                 }).start();
                 break;
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        try {
+            if (requestCode == 200 && resultCode == RESULT_OK) {
+                String decodedfilePath = GetPath.getPath(getApplicationContext(), Uri.parse(data.getDataString()));
+                path.setText(decodedfilePath);
+
+
+                try {
+                    File file = new File(decodedfilePath);
+                    file.getParentFile().mkdir();
+
+                    String str;
+                    datas.clear();
+                    SensorData tmpdata;
+                    BufferedReader br = new BufferedReader(new FileReader(file));
+                    while ((str = br.readLine()) != null) {
+                        String[] raw = str.split(",");
+                        tmpdata = new SensorData();
+                        tmpdata.setTime(Integer.parseInt(raw[0]));
+                        tmpdata.setAccel(new float[]{Float.valueOf(raw[1]), Float.valueOf(raw[2]), Float.valueOf(raw[3])});
+                        tmpdata.setMagnetic(new float[]{Float.valueOf(raw[4]), Float.valueOf(raw[5]), Float.valueOf(raw[6])});
+                        tmpdata.setGyro(new float[]{Float.valueOf(raw[7]), Float.valueOf(raw[8]), Float.valueOf(raw[9])});
+                        datas.add(tmpdata);
+                    }
+
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
