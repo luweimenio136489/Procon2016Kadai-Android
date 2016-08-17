@@ -3,7 +3,9 @@ package com.example.tukitan.SensorSaver;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -22,6 +24,13 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import com.github.mikephil.charting.animation.Easing;
+import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.utils.ColorTemplate;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -35,6 +44,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener, View.OnClickListener {
@@ -64,7 +74,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private static final int SAMPLE_RATE = 22050;
     private static final int BITRATE = 128000;
 
-
+    String now;
     private MediaRecorder mediarecorder; //録音用のメディアレコーダークラス
 
 
@@ -87,9 +97,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 .findFragmentById(R.id.log_fragment);
         logView = logFragment.getLogView();*/
 
-        calender = Calendar.getInstance();
         autoRefreshSettion();
-
     }
     /**
      * セッションの自動更新
@@ -258,10 +266,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         for(int i=0;i<2;i++){
             str[i] = String.format("%.4f",attitude[i] - initalizeAttitude[i]);
         }
-        String now = "_" + (calender.get(Calendar.MONTH) +1) + "_" + calender.get(Calendar.DAY_OF_MONTH) + "_"
+        /*String now = "_" + (calender.get(Calendar.MONTH) +1) + "_" + calender.get(Calendar.DAY_OF_MONTH) + "_"
                 + calender.get(Calendar.HOUR_OF_DAY) + "_" +calender.get(Calendar.MINUTE);
         file = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/attitude" + now + ".txt");
-        dataFile = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/sensorData" + now + ".txt");
+        dataFile = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/sensorData" + now + ".txt");*/
 
         String getData = System.currentTimeMillis() - startTime + "," +
                 String.format("%.5f",accel[0]) + "," + String.format("%.5f",accel[1]) + "," + String.format("%.5f",accel[2]) + "," +
@@ -310,8 +318,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
              * fos:傾きを記録するファイル
              * fos2:9軸センサのデータをそのまま保存するファイル
              */
-            String now = "_" + (calender.get(Calendar.MONTH) + 1) + "_" + calender.get(Calendar.DAY_OF_MONTH) + "_"
-                    + calender.get(Calendar.HOUR_OF_DAY) + "_" +calender.get(Calendar.MINUTE);
+            calender = Calendar.getInstance();
+            String now = "_"
+                    + String.format("%02d",calender.get(Calendar.MONTH) + 1) + "_"
+                    + String.format("%02d",calender.get(Calendar.DAY_OF_MONTH)) + "_"
+                    + String.format("%02d",calender.get(Calendar.HOUR_OF_DAY)) + "_"
+                    + String.format("%02d",calender.get(Calendar.MINUTE)) + "_"
+                    + String.format("%02d",calender.get(Calendar.SECOND));
             file = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/attitude" + now + ".txt");
             dataFile = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/sensorData" + now + ".txt");
 
@@ -333,8 +346,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void startMediaRecord(){
         try{
-            String now = "_" + (calender.get(Calendar.MONTH) + 1) + "_" + calender.get(Calendar.DAY_OF_MONTH) + "_"
-                    + calender.get(Calendar.HOUR_OF_DAY) + "_" +calender.get(Calendar.MINUTE);
+            String now = "_"
+                    + String.format("%02d",calender.get(Calendar.MONTH) + 1) + "_"
+                    + String.format("%02d",calender.get(Calendar.DAY_OF_MONTH)) + "_"
+                    + String.format("%02d",calender.get(Calendar.HOUR_OF_DAY)) + "_"
+                    + String.format("%02d",calender.get(Calendar.MINUTE)) + "_"
+                    + String.format("%02d",calender.get(Calendar.SECOND));
             String filePath = Environment.getExternalStorageDirectory() + "/SynchroAthlete/soundData"
                     + now +".wav"; //録音用のファイルパス
             File mediafile = new File(filePath);
@@ -393,6 +410,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
         }
     }
+
     /**
      * HTTP通信を行うクラス
      */
