@@ -5,4 +5,4 @@
  	GetBTData  Bluetooth連携しsensorの値を取得するアプリ
 	softrule 	センサーデータ書式について
 	SensorSaver　センサーの値を取得保存するアプリ
-  3dtilt  センサデータを再現するアプリ
+	3dtilt  センサデータを再現するアプリ
