@@ -5,7 +5,7 @@ android {
     buildToolsVersion "23.0.3"
 
     defaultConfig {
-        applicationId "com.example.tukitan.SensorSaver"
+        applicationId "com.example.tukitan.dataTrance"
         minSdkVersion 21
         targetSdkVersion 23
         versionCode 1
