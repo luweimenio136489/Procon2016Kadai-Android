@@ -6,3 +6,4 @@
 	softrule 	センサーデータ書式について
 	SensorSaver　センサーの値を取得保存するアプリ
 	3dtilt  センサデータを再現するアプリ
+    dataTrance　センサーデータをUDPで送信するアプリ
