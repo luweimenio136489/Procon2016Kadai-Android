@@ -21,6 +21,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.squareup.okhttp.MediaType;
@@ -52,6 +53,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private static boolean whiteState = false;
     long startTime;
     //TextView sValue,aValue;
+    TextView state;
+
     private double[] initalizeAttitude = new double[2];
 
     DatagramPacket dp;
@@ -68,6 +71,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         ((ImageButton) findViewById(R.id.startButton)).setOnClickListener(this);
         ((ImageButton) findViewById(R.id.stopButton)).setOnClickListener(this);
         ((Button) findViewById(R.id.initButton)).setOnClickListener(this);
+
+        state = (TextView) findViewById(R.id.genzai);
     }
 
     protected void onResume() {
@@ -123,6 +128,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         switch (v.getId()) {
             case R.id.startButton:
                 if (isInited) {
+                    state.setText("現在の状態：送信中");
                     whiteState = true;
                     startTime = System.currentTimeMillis();
                     (new Thread(new inputData())).start();
@@ -138,16 +144,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 initalizeAttitude[0] = attitude[0];
                 initalizeAttitude[1] = attitude[1];
                 isInited = true;
+                state.setText("現在の状態：初期化済み");
                 break;
 
             case R.id.stopButton:
                 whiteState = false;
                 Toast.makeText(this, "書き込みを停止しました", Toast.LENGTH_SHORT).show();
+                state.setText("現在の状態：未初期化");
                 break;
-
-            case R.id.reconnect:
-                break;
-
         }
     }
 

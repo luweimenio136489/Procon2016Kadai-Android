@@ -12,6 +12,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:inputType="number"
         android:text="Address"
         android:id="@+id/add"/>
 
@@ -19,6 +20,7 @@
         android:id="@+id/addressTxt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:inputType="number"
         android:text="192.168.10.2"
         android:layout_below="@+id/add"/>
 
@@ -52,8 +54,8 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/initButton"
         android:layout_alignParentStart="true"
-        android:layout_toEndOf="@+id/reconnect"
-        android:layout_toRightOf="@+id/reconnect">
+        android:layout_toEndOf="@+id/initButton"
+        android:layout_toRightOf="@+id/initButton">
 
         <ImageButton
             android:id="@+id/startButton"
@@ -72,56 +74,14 @@
 
     </LinearLayout>
 
-    <!--
     <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Medium Text"
-        android:id="@+id/sensorValue"
-        android:layout_centerVertical="true"
-        android:layout_alignParentStart="true"
-        android:layout_below="@+id/reconnect"/>
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Medium Text"
-        android:id="@+id/attitudeVale"
-        android:layout_weight="1"
-        android:layout_below="@+id/sensorValue"
-        android:layout_alignParentStart="true" />
-    <ViewAnimator
-        android:id="@+id/sample_output"
+        android:id="@+id/genzai"
         android:layout_width="match_parent"
-        android:layout_height="110dp"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:background="#aaaaaa"
-        android:minHeight="250dp"
-        android:layout_below="@+id/reconnect">
+        android:layout_height="wrap_content"
+        android:text="現在の状態：未初期化"
+        android:textSize="30dp"
+        android:layout_below="@+id/layout"/>
 
-        <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true">
-            <fragment
-                android:id="@+id/log_fragment"
-                android:name="LogFragment"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_gravity="right|center_vertical"
-                android:layout_margin="10dp" />
-
-            <TextClock
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/textClock"
-                android:layout_gravity="right|top" />
-        </FrameLayout>
-    </ViewAnimator> -->
 
 
 </RelativeLayout>
