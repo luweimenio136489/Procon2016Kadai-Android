@@ -45,7 +45,6 @@ import java.util.Calendar;
 public class MainActivity extends AppCompatActivity implements SensorEventListener, View.OnClickListener {
 
     private SensorManager sensor_manager;
-    public static double Rad2Dec = (double) 180 / Math.PI;
     private float[] accel = new float[3];
     private double[] attitude = new double[2];
     double gravity;
@@ -69,12 +68,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         ((ImageButton) findViewById(R.id.startButton)).setOnClickListener(this);
         ((ImageButton) findViewById(R.id.stopButton)).setOnClickListener(this);
         ((Button) findViewById(R.id.initButton)).setOnClickListener(this);
-        /*sValue = (TextView) findViewById(R.id.sensorValue);
-        aValue = (TextView) findViewById(R.id.attitudeVale);*/
-
-        /*LogFragment logFragment = (LogFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.log_fragment);
-        logView = logFragment.getLogView();*/
     }
 
     protected void onResume() {
@@ -91,11 +84,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 accel = event.values.clone();
                 attitude = getAttitude(accel);
                 gravity = getGravity(accel, attitude);
-                /*String viewString = String.format("X axis:%.2f  ", accel[0]) + String.format("Y axis:%.2f  ", accel[2])
-                        + String.format("Z axis:%.2f", accel[1]);
-                String attitudeString = String.format("X axis:%.3f ,Z axis:%.3f ,gravity:%.3f",attitude[0]*Rad2Dec,attitude[1]*Rad2Dec,gravity);
-                sValue.setText(viewString);
-                aValue.setText(attitudeString);*/
                 break;
         }
     }
@@ -136,7 +124,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             case R.id.startButton:
                 if (isInited) {
                     whiteState = true;
-                    writeFileInit();
                     startTime = System.currentTimeMillis();
                     (new Thread(new inputData())).start();
                     Toast.makeText(this, "書き込みを開始しました", Toast.LENGTH_SHORT).show();
@@ -148,7 +135,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
             case R.id.initButton:
                 Toast.makeText(this, "初期化しました", Toast.LENGTH_SHORT).show();
-                //logHTML(ThetaRequest.getModeRequest(true, settionID), false);
                 initalizeAttitude[0] = attitude[0];
                 initalizeAttitude[1] = attitude[1];
                 isInited = true;
@@ -181,23 +167,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         answer = Math.sqrt(XYvector*XYvector + accelData[1]*accelData[1]);
         answer = answer - 9.8;
         return answer;
-    }
-
-    private void writeFileInit(){
-        try {
-            ds = new DatagramSocket();
-            InetAddress host = InetAddress.getByName(address);
-            byte[] data = "Send by UDP.\r\n".getBytes();
-            dp = new DatagramPacket(data,data.length,host,port);
-            ds.send(dp);
-            Thread.sleep(16);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (NetworkOnMainThreadException e){
-            Log.e("Error","接続できませんでした");
-        } catch (Exception e) {
-            System.out.println(e);
-        }
     }
 
     // データを出力するスレッド
