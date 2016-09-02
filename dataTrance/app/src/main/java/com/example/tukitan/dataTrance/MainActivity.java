@@ -205,6 +205,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     System.out.println(e);
                 }
             }
+            try {
+                InetAddress host = InetAddress.getByName(address);
+                byte[] data = "exit".getBytes();
+                dp = new DatagramPacket(data,data.length,host,port);
+                ds.send(dp);
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (NetworkOnMainThreadException e){
+                Log.e("Error","接続できませんでした");
+            } catch (Exception e) {
+                System.out.println(e);
+            }
         }
     }
 }
