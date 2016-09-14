@@ -28,20 +28,24 @@
         android:layout_toEndOf="@+id/reconnect"
         android:layout_toRightOf="@+id/reconnect">
 
-        <ImageButton
+        <Button
             android:id="@+id/startButton"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:src="@android:drawable/ic_media_play"
+            android:text="記録開始"
+            android:gravity="center"
+            android:textSize="15dp"
             android:layout_alignParentStart="true"/>
 
-        <ImageButton
+        <Button
             android:id="@+id/stopButton"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:src="@android:drawable/ic_media_pause" />
+            android:text="記録終了"
+            android:gravity="center"
+            android:textSize="15dp"/>
 
     </LinearLayout>
     <Button
@@ -59,57 +63,12 @@
         android:layout_below="@+id/reconnect"
         android:background="#ff0000"
         android:layout_alignParentStart="true" />
-
-    <!--
     <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Medium Text"
-        android:id="@+id/sensorValue"
-        android:layout_centerVertical="true"
-        android:layout_alignParentStart="true"
-        android:layout_below="@+id/reconnect"/>
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Medium Text"
-        android:id="@+id/attitudeVale"
-        android:layout_weight="1"
-        android:layout_below="@+id/sensorValue"
-        android:layout_alignParentStart="true" />
-    <ViewAnimator
-        android:id="@+id/sample_output"
+        android:text="現在の状態：停止中"
         android:layout_width="match_parent"
-        android:layout_height="110dp"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:background="#aaaaaa"
-        android:minHeight="250dp"
-        android:layout_below="@+id/reconnect">
-
-        <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true">
-            <fragment
-                android:id="@+id/log_fragment"
-                android:name="com.example.tukitan.SensorSaver.LogFragment"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_gravity="right|center_vertical"
-                android:layout_margin="10dp" />
-
-            <TextClock
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/textClock"
-                android:layout_gravity="right|top" />
-        </FrameLayout>
-    </ViewAnimator> -->
-
+        android:layout_height="wrap_content"
+        android:layout_below="@id/isConnect"
+        android:textSize="20dp"
+        android:id="@+id/state"/>
 
 </RelativeLayout>

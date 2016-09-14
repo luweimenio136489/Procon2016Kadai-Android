@@ -22,6 +22,7 @@ import android.view.Surface;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.mikephil.charting.animation.Easing;
@@ -70,7 +71,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     View surface;
     Calendar calender;
-
+    TextView nowState;
     private static final int SAMPLE_RATE = 22050;
     private static final int BITRATE = 128000;
 
@@ -85,11 +86,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         sensor_manager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.RECORD_AUDIO}, 100);
         // ボタンを設定
-        ((ImageButton) findViewById(R.id.startButton)).setOnClickListener(this);
-        ((ImageButton) findViewById(R.id.stopButton)).setOnClickListener(this);
+        ((Button) findViewById(R.id.startButton)).setOnClickListener(this);
+        ((Button) findViewById(R.id.stopButton)).setOnClickListener(this);
         ((Button) findViewById(R.id.initButton)).setOnClickListener(this);
         ((Button) findViewById(R.id.reconnect)).setOnClickListener(this);
         surface = findViewById(R.id.isConnect);
+        nowState = (TextView)findViewById(R.id.state);
         /*sValue = (TextView) findViewById(R.id.sensorValue);
         aValue = (TextView) findViewById(R.id.attitudeVale);*/
 
@@ -103,6 +105,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
      * セッションの自動更新
      * SLEEP_TIME_SESSIONで秒設定
      */
+
     public void autoRefreshSettion() {
         refleshSession();
         final Handler handler = new Handler();
@@ -234,6 +237,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     Toast.makeText(this, "書き込みを開始しました", Toast.LENGTH_SHORT).show();
                     startMediaRecord();
                     isInited = false;
+                    nowState.setText("現在の状態：記録中");
                 } else Toast.makeText(this, "先に初期化をしてください", Toast.LENGTH_SHORT).show();
                 break;
 
@@ -244,6 +248,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 initalizeAttitude[0] = attitude[0];
                 initalizeAttitude[1] = attitude[1];
                 isInited = true;
+                nowState.setText("現在の状態：初期化済み");
                 break;
 
             case R.id.stopButton:
@@ -251,6 +256,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 whiteState = false;
                 Toast.makeText(this, "書き込みを停止しました", Toast.LENGTH_SHORT).show();
                 stopRecord();
+                nowState.setText("現在の状態：未送信");
                 break;
 
             case R.id.reconnect:
