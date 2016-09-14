@@ -256,7 +256,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 whiteState = false;
                 Toast.makeText(this, "書き込みを停止しました", Toast.LENGTH_SHORT).show();
                 stopRecord();
-                nowState.setText("現在の状態：未送信");
+                nowState.setText("現在の状態：停止中");
                 break;
 
             case R.id.reconnect:
