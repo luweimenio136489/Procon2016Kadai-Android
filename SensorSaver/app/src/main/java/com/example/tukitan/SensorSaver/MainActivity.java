@@ -269,24 +269,25 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         /*String now = "_" + (calender.get(Calendar.MONTH) +1) + "_" + calender.get(Calendar.DAY_OF_MONTH) + "_"
                 + calender.get(Calendar.HOUR_OF_DAY) + "_" +calender.get(Calendar.MINUTE);
         file = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/attitude" + now + ".txt");
-        dataFile = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/sensorData" + now + ".txt");*/
+        dataFile = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/sensorData" + now + ".txt");
 
         String getData = System.currentTimeMillis() - startTime + "," +
                 String.format("%.5f",accel[0]) + "," + String.format("%.5f",accel[1]) + "," + String.format("%.5f",accel[2]) + "," +
                 String.format("%.5f",magnetic[0]) + "," + String.format("%.5f",magnetic[1]) + "," + String.format("%.5f",magnetic[2]) + "," +
                 String.format("%.5f",gyro[0]) + "," + String.format("%.5f",gyro[1]) + "," + String.format("%.5f",gyro[2]) + "\r\n";
-        ;
+        */
         String outputAttitude = System.currentTimeMillis() -startTime + "," +
                 str[0] + "," + str[1] + "," + String.format("%.4f",gravity) + "\r\n";
         FileOutputStream fos = null;
-        FileOutputStream fos2 = null;
+        //FileOutputStream fos2 = null;
         try {
             fos = new FileOutputStream(file, true);
             fos.write(outputAttitude.getBytes());
             fos.close();
+            /*
             fos2 = new FileOutputStream(dataFile, true);
             fos2.write(getData.getBytes());
-            fos2.close();
+            fos2.close();*/
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -326,17 +327,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     + String.format("%02d",calender.get(Calendar.MINUTE)) + "_"
                     + String.format("%02d",calender.get(Calendar.SECOND));
             file = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/attitude" + now + ".txt");
-            dataFile = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/sensorData" + now + ".txt");
+           // dataFile = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/sensorData" + now + ".txt");
 
             //SDカードへのpathを準備
             file.getParentFile().mkdir();
 
             FileOutputStream fos = new FileOutputStream(file);
-            FileOutputStream fos2 = new FileOutputStream(dataFile);
+            //FileOutputStream fos2 = new FileOutputStream(dataFile);
             fos.write("DataNum,0.016,offset.\r\n".getBytes());
-            fos2.write("Time,Xaccel,Yaccel,Zaccel,Xmagnetic,Ymagnetic,Zmegnetic,Xgyro,Ygyro,Zgyro .\r\n".getBytes());
+            //fos2.write("Time,Xaccel,Yaccel,Zaccel,Xmagnetic,Ymagnetic,Zmegnetic,Xgyro,Ygyro,Zgyro .\r\n".getBytes());
             fos.close();
-            fos2.close();
+            //fos2.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
