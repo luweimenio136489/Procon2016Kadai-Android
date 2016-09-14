@@ -20,7 +20,7 @@
         android:id="@+id/addressTxt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:inputType="number"
+        android:inputType="text"
         android:text="192.168.10.2"
         android:layout_below="@+id/add"/>
 
@@ -57,20 +57,24 @@
         android:layout_toEndOf="@+id/initButton"
         android:layout_toRightOf="@+id/initButton">
 
-        <ImageButton
+        <Button
             android:id="@+id/startButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:src="@android:drawable/ic_media_play"
+            android:text="送信開始"
+            android:gravity="center"
+            android:textSize="15dp"
             android:layout_alignParentStart="true"/>
 
-        <ImageButton
+        <Button
             android:id="@+id/stopButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:src="@android:drawable/ic_media_pause" />
+            android:text="送信終了"
+            android:gravity="center"
+            android:textSize="15dp" />
 
     </LinearLayout>
 

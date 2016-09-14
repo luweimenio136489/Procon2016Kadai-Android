@@ -68,8 +68,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setContentView(R.layout.activity_get_sensor_value);
         sensor_manager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         // ボタンを設定
-        ((ImageButton) findViewById(R.id.startButton)).setOnClickListener(this);
-        ((ImageButton) findViewById(R.id.stopButton)).setOnClickListener(this);
+        ((Button) findViewById(R.id.startButton)).setOnClickListener(this);
+        ((Button) findViewById(R.id.stopButton)).setOnClickListener(this);
         ((Button) findViewById(R.id.initButton)).setOnClickListener(this);
 
         state = (TextView) findViewById(R.id.genzai);
