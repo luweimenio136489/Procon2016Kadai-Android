@@ -148,11 +148,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     //加速度から傾きを求める関数
     synchronized private double[] getAttitude(float accelData[]) {
-        // attitude[0]:X軸に対する回転角　attitude[1]:Y軸に対する回転角
+        // attitude[0]:X軸に対する回転角　attitude[1]:Z軸に対する回転角
         double attitude[] = new double[2];
 
-        attitude[0] = Math.atan(accelData[1]/accelData[2]);
-        attitude[1] = Math.atan(accelData[0]/accelData[2]);
+        attitude[0] = Math.atan2(accelData[1],accelData[2]);
+        attitude[1] = Math.atan2(accelData[0],accelData[2]);
         return attitude;
     }
     //加速度から重直方向への加速度を求める関数
@@ -201,9 +201,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
             while (whiteState) {
                 String[] str = new String[2];
+                double tmp;
                 for(int i=0;i<2;i++){
-                    str[i] = String.format("%.4f",attitude[i] - initalizeAttitude[i]);
+                    if((initalizeAttitude[i] - attitude[i]) > Math.PI) tmp = initalizeAttitude[i] - attitude[i] - Math.PI;
+                    else if((initalizeAttitude[i] - attitude[i]) < -Math.PI) tmp = initalizeAttitude[i] - attitude[i] + Math.PI;
+                    else tmp = initalizeAttitude[i] - attitude[i];
+                    str[i] = String.format("%.4f",tmp);
                 }
+                System.out.println("X軸の傾き:"+str[0]+"  Z軸の傾き:"+str[1]);
                 String outputAttitude = System.currentTimeMillis() -startTime + "," +
                         str[0] + "," + str[1] + "," + String.format("%.4f",gravity) + "\r\n";
                 try {
@@ -211,7 +216,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     byte[] data = outputAttitude.getBytes();
                     dp = new DatagramPacket(data,data.length,host,port);
                     ds.send(dp);
-                    Thread.sleep(16);
+                    Thread.sleep(50);
                 } catch (IOException e) {
                     e.printStackTrace();
                 } catch (NetworkOnMainThreadException e){
