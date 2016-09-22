@@ -20,6 +20,7 @@ import android.os.Bundle;
 import android.text.Html;
 import android.view.Surface;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -98,7 +99,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         /*LogFragment logFragment = (LogFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.log_fragment);
         logView = logFragment.getLogView();*/
-
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         autoRefreshSettion();
     }
     /**
