@@ -208,7 +208,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     else tmp = initalizeAttitude[i] - attitude[i];
                     str[i] = String.format("%.4f",tmp);
                 }
-                System.out.println("X軸の傾き:"+str[0]+"  Z軸の傾き:"+str[1]);
                 String outputAttitude = System.currentTimeMillis() -startTime + "," +
                         str[0] + "," + str[1] + "," + String.format("%.4f",gravity) + "\r\n";
                 try {
