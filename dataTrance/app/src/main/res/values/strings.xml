@@ -1,5 +1,4 @@
 <resources>
     <string name="app_name">dataTrance</string>
-    <string name="set_videoMode">初期化</string>
-    <string name="reconnect">再接続</string>
 </resources>
+
