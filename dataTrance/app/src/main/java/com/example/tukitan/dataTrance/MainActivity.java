@@ -10,6 +10,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.media.MediaRecorder;
 import android.os.AsyncTask;
+import android.os.CountDownTimer;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.NetworkOnMainThreadException;
@@ -49,30 +50,30 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private float[] accel = new float[3];
     private double[] attitude = new double[2];
     double gravity;
-    boolean isInited = false;
     private static boolean whiteState = false;
     long startTime;
     //TextView sValue,aValue;
     TextView state;
-
+    EditText counter;
+    int time;
     private double[] initalizeAttitude = new double[2];
-
     DatagramPacket dp;
     DatagramSocket ds;
     String address;
     int port;
-
+    CountDown countdown;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_get_sensor_value);
         sensor_manager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         // ボタンを設定
-        ((Button) findViewById(R.id.startButton)).setOnClickListener(this);
         ((Button) findViewById(R.id.stopButton)).setOnClickListener(this);
         ((Button) findViewById(R.id.initButton)).setOnClickListener(this);
 
         state = (TextView) findViewById(R.id.genzai);
+        counter = (EditText) findViewById(R.id.countTimer);
+
     }
 
     protected void onResume() {
@@ -122,40 +123,30 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
         }
     }
-
+    // それぞれのボタンのコールバック関数
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.startButton:
-                if (isInited) {
-                    state.setText("現在の状態：送信中");
-                    whiteState = true;
-                    startTime = System.currentTimeMillis();
-                    (new Thread(new inputData())).start();
-                    Toast.makeText(this, "書き込みを開始しました", Toast.LENGTH_SHORT).show();
-                    address = ((EditText)findViewById(R.id.addressTxt)).getText().toString();
-                    port = Integer.parseInt(((EditText)findViewById(R.id.portTxt)).getText().toString());
-                    isInited = false;
-                } else Toast.makeText(this, "先に初期化をしてください", Toast.LENGTH_SHORT).show();
-                break;
-
             case R.id.initButton:
-                Toast.makeText(this, "初期化しました", Toast.LENGTH_SHORT).show();
-                initalizeAttitude[0] = attitude[0];
-                initalizeAttitude[1] = attitude[1];
-                isInited = true;
-                state.setText("現在の状態：初期化済み");
+                address = ((EditText)findViewById(R.id.addressTxt)).getText().toString();
+                port = Integer.parseInt(((EditText)findViewById(R.id.portTxt)).getText().toString());
+                time = (counter != null) ? Integer.parseInt(counter.getText().toString()) : null ;
+                countdown = new CountDown(time*1000,1000);
+                countdown.start();
+                state.setText("現在の状態：初期化中");
                 break;
 
             case R.id.stopButton:
                 whiteState = false;
+                if(countdown != null) countdown.cancel();
                 Toast.makeText(this, "書き込みを停止しました", Toast.LENGTH_SHORT).show();
                 state.setText("現在の状態：未初期化");
+                counter.setText(Integer.toString(10));
                 break;
         }
     }
 
-
+    //加速度から傾きを求める関数
     synchronized private double[] getAttitude(float accelData[]) {
         // attitude[0]:X軸に対する回転角　attitude[1]:Y軸に対する回転角
         double attitude[] = new double[2];
@@ -164,7 +155,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         attitude[1] = Math.atan(accelData[0]/accelData[2]);
         return attitude;
     }
-
+    //加速度から重直方向への加速度を求める関数
     synchronized  private double getGravity (float[] accelData ,double[] slope){
         double answer;
         double XYvector = Math.sqrt(accelData[0]*accelData[0] + accelData[2]*accelData[2]);
@@ -173,6 +164,30 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         return answer;
     }
 
+    //初期化までのカウントダウンスレッド
+    private class CountDown extends CountDownTimer {
+        public CountDown(long millsec,long interval){
+            super(millsec,interval);
+        }
+
+        @Override
+        public void onTick(long millisUntilFinished) {
+            time -= 1;
+            counter.setText(Integer.toString(time));
+        }
+
+        @Override
+        public void onFinish() {
+            whiteState = true;
+            counter.setText("0");
+            state.setText("現在の状態：送信中");
+            startTime = System.currentTimeMillis();
+            initalizeAttitude[0] = attitude[0];
+            initalizeAttitude[1] = attitude[1];
+            Log.d("message", "Called onFinish()");
+            (new Thread(new inputData())).start();
+        }
+    }
     // データを出力するスレッド
     private class inputData implements Runnable {
         @Override

@@ -43,40 +43,18 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="right|top"
-        android:src="@android:drawable/ic_menu_slideshow"
         android:layout_below="@+id/portTxt"
+        android:textSize="20dp"
         android:text="@string/set_videoMode" />
 
-    <LinearLayout
-        android:id="@+id/layout"
-        android:orientation="horizontal"
+
+    <Button
+        android:id="@+id/stopButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/initButton"
-        android:layout_alignParentStart="true"
-        android:layout_toEndOf="@+id/initButton"
-        android:layout_toRightOf="@+id/initButton">
-
-        <Button
-            android:id="@+id/startButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="送信開始"
-            android:gravity="center"
-            android:textSize="15dp"
-            android:layout_alignParentStart="true"/>
-
-        <Button
-            android:id="@+id/stopButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="送信終了"
-            android:gravity="center"
-            android:textSize="15dp" />
-
-    </LinearLayout>
+        android:text="送信終了"
+        android:textSize="20dp"
+        android:layout_below="@+id/initButton"/>
 
     <TextView
         android:id="@+id/genzai"
@@ -84,7 +62,26 @@
         android:layout_height="wrap_content"
         android:text="現在の状態：未初期化"
         android:textSize="30dp"
-        android:layout_below="@+id/layout"/>
+        android:layout_below="@+id/stopButton"/>
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="10"
+        android:id="@+id/countTimer"
+        android:textSize="25dp"
+        android:layout_below="@+id/addressTxt"
+        android:layout_toEndOf="@+id/addressTxt"
+        android:inputType="number"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="秒後に送信開始します"
+        android:id="@+id/textView2"
+        android:textSize="20dp"
+        android:layout_below="@+id/por"
+        android:layout_toEndOf="@+id/countTimer" />
 
 
 
