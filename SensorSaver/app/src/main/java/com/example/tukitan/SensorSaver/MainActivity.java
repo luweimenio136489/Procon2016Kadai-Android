@@ -269,8 +269,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     // データをストレージへ出力
     synchronized public void inputText() {
         String[] str = new String[2];
+        double tmp;
         for(int i=0;i<2;i++){
-            str[i] = String.format("%.4f",attitude[i] - initalizeAttitude[i]);
+            if((initalizeAttitude[i] - attitude[i]) > Math.PI) tmp = initalizeAttitude[i] - attitude[i] - Math.PI;
+            else if((initalizeAttitude[i] - attitude[i]) < -Math.PI) tmp = initalizeAttitude[i] - attitude[i] + Math.PI;
+            else tmp = initalizeAttitude[i] - attitude[i];
+            str[i] = String.format("%.4f",tmp);
         }
         /*String now = "_" + (calender.get(Calendar.MONTH) +1) + "_" + calender.get(Calendar.DAY_OF_MONTH) + "_"
                 + calender.get(Calendar.HOUR_OF_DAY) + "_" +calender.get(Calendar.MINUTE);
@@ -305,8 +309,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         // attitude[0]:X軸に対する回転角　attitude[1]:Y軸に対する回転角
         double attitude[] = new double[2];
 
-        attitude[0] = Math.atan(accelData[1]/accelData[2]);
-        attitude[1] = Math.atan(accelData[0]/accelData[2]);
+        attitude[0] = Math.atan2(accelData[1],accelData[2]);
+        attitude[1] = Math.atan2(accelData[0],accelData[2]);
         return attitude;
     }
 
