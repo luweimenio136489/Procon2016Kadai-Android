@@ -1,0 +1,24 @@
+<component name="ArtifactManager">
+  <artifact type="javafx" name="MkSource4J">
+    <output-path>$PROJECT_DIR$/out/</output-path>
+    <properties id="javafx-properties">
+      <options>
+        <option name="appClass" value="mksource.Main" />
+        <option name="description" value="" />
+        <option name="htmlPlaceholderId" value="" />
+        <option name="nativeBundle" value="exe" />
+        <option name="title" value="MakeSourceList" />
+        <option name="vendor" value="NIT-Tokyo" />
+        <option name="version" value="1.0" />
+      </options>
+    </properties>
+    <root id="root">
+      <element id="archive" name="MkSource4J.jar">
+        <element id="module-output" name="MkSource4J" />
+        <element id="directory" name="libs">
+          <element id="library" level="project" name="lib" />
+        </element>
+      </element>
+    </root>
+  </artifact>
+</component>

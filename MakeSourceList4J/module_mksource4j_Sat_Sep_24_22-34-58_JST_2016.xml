@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="module_mksource4j" default="compile.module.mksource4j">
+  <dirname property="module.mksource4j.basedir" file="${ant.file.module_mksource4j}"/>
+  
+  <property name="module.jdk.home.mksource4j" value="${project.jdk.home}"/>
+  <property name="module.jdk.bin.mksource4j" value="${project.jdk.bin}"/>
+  <property name="module.jdk.classpath.mksource4j" value="${project.jdk.classpath}"/>
+  
+  <property name="compiler.args.mksource4j" value="-encoding UTF-8 -source 8 -target 8 ${compiler.args}"/>
+  
+  <property name="mksource4j.output.dir" value="${module.mksource4j.basedir}/out/production/MkSource4J"/>
+  <property name="mksource4j.testoutput.dir" value="${module.mksource4j.basedir}/out/test/MkSource4J"/>
+  
+  <path id="mksource4j.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="mksource4j.module.production.classpath">
+    <path refid="${module.jdk.classpath.mksource4j}"/>
+    <path refid="library.lib.classpath"/>
+  </path>
+  
+  <path id="mksource4j.runtime.production.module.classpath">
+    <pathelement location="${mksource4j.output.dir}"/>
+    <path refid="library.lib.classpath"/>
+  </path>
+  
+  <path id="mksource4j.module.classpath">
+    <path refid="${module.jdk.classpath.mksource4j}"/>
+    <pathelement location="${mksource4j.output.dir}"/>
+    <path refid="library.lib.classpath"/>
+  </path>
+  
+  <path id="mksource4j.runtime.module.classpath">
+    <pathelement location="${mksource4j.testoutput.dir}"/>
+    <pathelement location="${mksource4j.output.dir}"/>
+    <path refid="library.lib.classpath"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.mksource4j">
+    <patternset refid="ignored.files"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.mksource4j">
+    <patternset refid="excluded.from.module.mksource4j"/>
+  </patternset>
+  
+  <path id="mksource4j.module.sourcepath">
+    <dirset dir="${module.mksource4j.basedir}">
+      <include name="src"/>
+    </dirset>
+  </path>
+  
+  
+  <target name="compile.module.mksource4j" depends="compile.module.mksource4j.production,compile.module.mksource4j.tests" description="Compile module MkSource4J"/>
+  
+  <target name="compile.module.mksource4j.production" depends="register.custom.compilers" description="Compile module MkSource4J; production classes">
+    <mkdir dir="${mksource4j.output.dir}"/>
+    <javac2 destdir="${mksource4j.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.mksource4j}/javac">
+      <compilerarg line="${compiler.args.mksource4j}"/>
+      <bootclasspath refid="mksource4j.module.bootclasspath"/>
+      <classpath refid="mksource4j.module.production.classpath"/>
+      <src refid="mksource4j.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.mksource4j"/>
+    </javac2>
+    
+    <copy todir="${mksource4j.output.dir}">
+      <fileset dir="${module.mksource4j.basedir}/src">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="compile.module.mksource4j.tests" depends="register.custom.compilers,compile.module.mksource4j.production" description="compile module MkSource4J; test classes" unless="skip.tests"/>
+  
+  <target name="clean.module.mksource4j" description="cleanup module">
+    <delete dir="${mksource4j.output.dir}"/>
+    <delete dir="${mksource4j.testoutput.dir}"/>
+  </target>
+</project>

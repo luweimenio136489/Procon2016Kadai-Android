@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXListView?>
+<?import com.jfoenix.controls.JFXTextField?>
+<?import com.jfoenix.controls.JFXToolbar?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox fx:id="mainpage" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="400.0"
+      minWidth="700.0" prefHeight="461.0" prefWidth="600.0" style="-fx-background-color: #ECEFF1;"
+      xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="mksource.Controller">
+    <children>
+        <JFXToolbar maxHeight="56.0" maxWidth="1.7976931348623157E308" minHeight="56.0" prefHeight="56.0"
+                    style="-fx-background-color: #2196F3;">
+            <left>
+                <Pane prefHeight="56.0" prefWidth="245.0" BorderPane.alignment="CENTER">
+                    <children>
+                        <Label layoutX="34.0" layoutY="17.0" lineSpacing="8.0" text="ソースリスト作るよ" textFill="WHITE">
+                            <font>
+                                <Font name="System Bold" size="16.0"/>
+                            </font>
+                        </Label>
+                    </children>
+                </Pane>
+            </left>
+        </JFXToolbar>
+        <VBox layoutX="51.0" layoutY="63.0" prefHeight="156.0" prefWidth="652.0">
+
+            <children>
+
+                <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0">
+                    <JFXButton fx:id="picker" buttonType="RAISED" minWidth="90.0" onAction="#buttonsHandler"
+                               style="-fx-background-color: #9C27B0;" text="ファイル選択…" textFill="WHITE"/>
+                    <Label fx:id="currentDir" text="ぱすだお">
+                        <VBox.margin>
+                            <Insets top="20.0"/>
+                        </VBox.margin>
+                        <HBox.margin>
+                            <Insets left="10.0"/>
+                        </HBox.margin>
+                    </Label>
+                </HBox>
+                <HBox alignment="BOTTOM_LEFT" prefHeight="200.0" prefWidth="200.0">
+                    <Label text="選択済みファイル">
+                        <VBox.margin>
+                            <Insets top="20.0"/>
+                        </VBox.margin>
+                        <opaqueInsets>
+                            <Insets/>
+                        </opaqueInsets>
+                    </Label>
+                    <VBox.margin>
+                        <Insets top="20.0"/>
+                    </VBox.margin>
+
+                </HBox>
+
+                <JFXListView fx:id="fileList" minHeight="150.0" prefHeight="176.0" prefWidth="668.0"
+                             style="-fx-background-color: #DDDDDD;"/>
+
+                <VBox alignment="BOTTOM_RIGHT" prefHeight="200.0" prefWidth="200.0">
+                    <JFXButton fx:id="clear" layoutX="616.0" layoutY="107.0" onAction="#buttonsHandler" text="クリア"
+                               textAlignment="RIGHT"/>
+                </VBox>
+
+                <HBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="200.0">
+                    <JFXButton fx:id="generate" buttonType="RAISED" minWidth="100.0" onAction="#buttonsHandler"
+                               style="-fx-background-color: #F44336;" text="作成スタート！！" textFill="WHITE"/>
+                    <JFXTextField fx:id="outputname" maxWidth="224.0" minWidth="209.0" prefHeight="31.0"
+                                  prefWidth="209.0" promptText="出力ファイル名" text="output.docx">
+                        <opaqueInsets>
+                            <Insets/>
+                        </opaqueInsets>
+                        <HBox.margin>
+                            <Insets left="20.0"/>
+                        </HBox.margin>
+                    </JFXTextField>
+                </HBox>
+            </children>
+            <opaqueInsets>
+                <Insets bottom="30.0" left="30.0" right="30.0" top="30.0"/>
+            </opaqueInsets>
+            <VBox.margin>
+                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+            </VBox.margin>
+
+            <Label text="作成ボタンを押してください..." fx:id="geneLog"/>
+        </VBox>
+    </children>
+</VBox>
