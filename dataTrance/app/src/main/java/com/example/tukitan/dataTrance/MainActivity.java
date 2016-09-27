@@ -49,7 +49,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private SensorManager sensor_manager;
     private float[] accel = new float[3];
-    private double[] attitude = new double[2];
+    private float[] magnet = new float[3];
+    private float[] attitude = new float[3];
+    private float[] matrix = new float[9];
     double gravity;
     private static boolean whiteState = false;
     long startTime;
@@ -57,7 +59,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     TextView state;
     EditText counter;
     int time;
-    private double[] initalizeAttitude = new double[2];
+    private float[] initalizeAttitude = new float[3];
     DatagramPacket dp;
     DatagramSocket ds;
     String address;
@@ -74,6 +76,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         state = (TextView) findViewById(R.id.genzai);
         counter = (EditText) findViewById(R.id.countTimer);
+
+        //androidがスリープモードにならないように
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
     }
@@ -83,6 +87,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         //センサを取得
         sensor_manager.registerListener(this, sensor_manager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_GAME);
+        sensor_manager.registerListener(this, sensor_manager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD), SensorManager.SENSOR_DELAY_GAME);
     }
 
     public void onSensorChanged(SensorEvent event) {
@@ -90,9 +95,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         switch (event.sensor.getType()) {
             case Sensor.TYPE_ACCELEROMETER:
                 accel = event.values.clone();
-                attitude = getAttitude(accel);
-                gravity = getGravity(accel, attitude);
+                //attitude = getAttitude(accel);
+                gravity = getGravity(accel);
                 break;
+        }
+        switch (event.sensor.getType()) {
+            case Sensor.TYPE_MAGNETIC_FIELD:
+                magnet = event.values.clone();
+                break;
+        }
+        if(accel!=null||magnet!=null){
+            SensorManager.getRotationMatrix(matrix,null,accel,magnet);
+            SensorManager.getOrientation(matrix,attitude);
         }
     }
 
@@ -114,17 +128,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     }
 
-
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-        //パーミッションの確認
-        if (requestCode ==100) {
-            //許可をくれるまでパーミッション許可のアラートダイアログを出し続ける
-            if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Please allow permission", Toast.LENGTH_LONG).show();
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.RECORD_AUDIO}, 100);
-            }
-        }
-    }
     // それぞれのボタンのコールバック関数
     @Override
     public void onClick(View v) {
@@ -158,7 +161,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         return attitude;
     }
     //加速度から重直方向への加速度を求める関数
-    synchronized  private double getGravity (float[] accelData ,double[] slope){
+    synchronized  private double getGravity (float[] accelData){
         double answer;
         double XYvector = Math.sqrt(accelData[0]*accelData[0] + accelData[2]*accelData[2]);
         answer = Math.sqrt(XYvector*XYvector + accelData[1]*accelData[1]);
@@ -186,6 +189,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             startTime = System.currentTimeMillis();
             initalizeAttitude[0] = attitude[0];
             initalizeAttitude[1] = attitude[1];
+            initalizeAttitude[2] = attitude[2];
             Log.d("message", "Called onFinish()");
             (new Thread(new inputData())).start();
         }
@@ -202,14 +206,21 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 e.printStackTrace();
             }
             while (whiteState) {
-                String[] str = new String[2];
+                String[] str = new String[3];
                 double tmp;
-                for(int i=0;i<2;i++){
-                    if((initalizeAttitude[i] - attitude[i]) > Math.PI) tmp = initalizeAttitude[i] - attitude[i] - Math.PI;
+
+                for(int i=0;i<3;i++){
+                    /*if((initalizeAttitude[i] - attitude[i]) > Math.PI) tmp = initalizeAttitude[i] - attitude[i] - Math.PI;
                     else if((initalizeAttitude[i] - attitude[i]) < -Math.PI) tmp = initalizeAttitude[i] - attitude[i] + Math.PI;
-                    else tmp = initalizeAttitude[i] - attitude[i];
-                    str[i] = String.format("%.4f",tmp);
+                    else tmp = initalizeAttitude[i] - attitude[i];*/
+                    str[i] = String.format("%.4f",attitude[i]);
                 }
+                System.out.println("attitude[0]:"+str[0]+"  attitude[1]:"+str[1]+"  attitude[2]:"+str[2]);
+                /*
+                for(int i=0;i<3;i++) tmp[i]=Float.parseFloat(String.format("%.4f",tmp[i]));
+                System.out.println("attitude[0]:"+(initalizeAttitude[0]-tmp[0])*180/Math.PI+
+                        ",tmp[1]:"+(initalizeAttitude[1]-tmp[1])*180/Math.PI+
+                        ",tmp[2]:"+(initalizeAttitude[2]-tmp[2])*180/Math.PI);*/
                 String outputAttitude = System.currentTimeMillis() -startTime + "," +
                         str[0] + "," + str[1] + "," + String.format("%.4f",gravity) + "\r\n";
                 try {
