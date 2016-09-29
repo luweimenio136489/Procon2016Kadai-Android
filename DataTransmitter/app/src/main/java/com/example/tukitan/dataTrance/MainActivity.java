@@ -198,11 +198,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     if((initalizeAttitude[i] - attitude[i]) > Math.PI) tmp = initalizeAttitude[i] - attitude[i] - Math.PI;
                     else if((initalizeAttitude[i] - attitude[i]) < -Math.PI) tmp = initalizeAttitude[i] - attitude[i] + Math.PI;
                     else tmp = initalizeAttitude[i] - attitude[i];
-                    tmp = tmp*180/Math.PI;
                     str[i] = String.format("%.4f",tmp);
                 }
-                System.out.println("attitude[0]:"+str[0]+"  attitude[1]:"+str[1]);
-
                 String outputAttitude = System.currentTimeMillis() -startTime + "," +
                         str[0] + "," + str[1] + "," + String.format("%.4f",gravity) + "\r\n";
                 try {
