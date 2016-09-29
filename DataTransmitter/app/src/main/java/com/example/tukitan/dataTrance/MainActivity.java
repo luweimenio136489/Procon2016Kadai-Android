@@ -49,9 +49,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private SensorManager sensor_manager;
     private float[] accel = new float[3];
-    private float[] magnet = new float[3];
-    private float[] attitude = new float[3];
-    private float[] matrix = new float[9];
+    private double[] attitude = new double[2];
     double gravity;
     private static boolean whiteState = false;
     long startTime;
@@ -59,7 +57,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     TextView state;
     EditText counter;
     int time;
-    private float[] initalizeAttitude = new float[3];
+    private double[] initalizeAttitude = new double[2];
     DatagramPacket dp;
     DatagramSocket ds;
     String address;
@@ -76,10 +74,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         state = (TextView) findViewById(R.id.genzai);
         counter = (EditText) findViewById(R.id.countTimer);
-
         //androidがスリープモードにならないように
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
     }
 
     protected void onResume() {
@@ -87,7 +83,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         //センサを取得
         sensor_manager.registerListener(this, sensor_manager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_GAME);
-        sensor_manager.registerListener(this, sensor_manager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD), SensorManager.SENSOR_DELAY_GAME);
     }
 
     public void onSensorChanged(SensorEvent event) {
@@ -95,18 +90,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         switch (event.sensor.getType()) {
             case Sensor.TYPE_ACCELEROMETER:
                 accel = event.values.clone();
-                //attitude = getAttitude(accel);
+                attitude = getAttitude(accel);
                 gravity = getGravity(accel);
                 break;
-        }
-        switch (event.sensor.getType()) {
-            case Sensor.TYPE_MAGNETIC_FIELD:
-                magnet = event.values.clone();
-                break;
-        }
-        if(accel!=null||magnet!=null){
-            SensorManager.getRotationMatrix(matrix,null,accel,magnet);
-            SensorManager.getOrientation(matrix,attitude);
         }
     }
 
@@ -189,7 +175,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             startTime = System.currentTimeMillis();
             initalizeAttitude[0] = attitude[0];
             initalizeAttitude[1] = attitude[1];
-            initalizeAttitude[2] = attitude[2];
             Log.d("message", "Called onFinish()");
             (new Thread(new inputData())).start();
         }
@@ -206,17 +191,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 e.printStackTrace();
             }
             while (whiteState) {
-                String[] str = new String[3];
+                String[] str = new String[2];
                 double tmp;
 
-                for(int i=0;i<3;i++){
+                for(int i=0;i<2;i++){
                     if((initalizeAttitude[i] - attitude[i]) > Math.PI) tmp = initalizeAttitude[i] - attitude[i] - Math.PI;
                     else if((initalizeAttitude[i] - attitude[i]) < -Math.PI) tmp = initalizeAttitude[i] - attitude[i] + Math.PI;
                     else tmp = initalizeAttitude[i] - attitude[i];
                     tmp = tmp*180/Math.PI;
-                    str[i] = String.format("%.4f",attitude[i]);
+                    str[i] = String.format("%.4f",tmp);
                 }
-                System.out.println("attitude[0]:"+str[0]+"  attitude[1]:"+str[1]+"  attitude[2]:"+str[2]);
+                System.out.println("attitude[0]:"+str[0]+"  attitude[1]:"+str[1]);
 
                 String outputAttitude = System.currentTimeMillis() -startTime + "," +
                         str[0] + "," + str[1] + "," + String.format("%.4f",gravity) + "\r\n";
@@ -225,7 +210,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     byte[] data = outputAttitude.getBytes();
                     dp = new DatagramPacket(data,data.length,host,port);
                     ds.send(dp);
-                    Thread.sleep(50);
+                    Thread.sleep(16);
                 } catch (IOException e) {
                     e.printStackTrace();
                 } catch (NetworkOnMainThreadException e){
