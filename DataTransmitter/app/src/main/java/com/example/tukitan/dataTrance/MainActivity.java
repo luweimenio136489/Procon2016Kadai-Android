@@ -140,10 +140,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     //加速度から傾きを求める関数
     synchronized private double[] getAttitude(float accelData[]) {
         // attitude[0]:X軸に対する回転角　attitude[1]:Z軸に対する回転角
+        //accelData[0]:Xaccel accelData[1]:Zaccel accelData[2]:Yaccel
         double attitude[] = new double[2];
 
-        attitude[0] = Math.atan2(accelData[1],accelData[2]);
-        attitude[1] = Math.atan2(accelData[0],accelData[2]);
+        attitude[0] = Math.atan2(accelData[2],accelData[1]);
+        attitude[1] = Math.atan2(accelData[0],accelData[1]);
         return attitude;
     }
     //加速度から重直方向への加速度を求める関数
@@ -202,6 +203,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 }
                 String outputAttitude = System.currentTimeMillis() -startTime + "," +
                         str[0] + "," + str[1] + "," + String.format("%.4f",gravity) + "\r\n";
+
+                /*送ってるデータを確認するときは下のコメントを外して下さい*/
+                //System.out.println(outputAttitude);
+
                 try {
                     InetAddress host = InetAddress.getByName(address);
                     byte[] data = outputAttitude.getBytes();
