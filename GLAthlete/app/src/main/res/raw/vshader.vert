@@ -3,10 +3,15 @@ attribute vec3 position;
 
 varying vec2 texCoord;
 
-const vec2 fCenter = vec2(0.25, 0.4444); // uv空間
-const vec2 rCenter = vec2(0.75, 0.4444); // 同じく
-const vec2 fLen = vec2(0.25, 0.4444); // 半径(？)
-const vec2 rLen = vec2(0.25, 0.4444);
+// uv空間の値
+// 中心を画像から見てやや内側に補正
+const vec2 fCenter = vec2(0.25, 0.4444);
+//const vec2 fCenter = vec2(0.255, 0.4444);
+const vec2 rCenter = vec2(0.75, 0.4444);
+//const vec2 rCenter = vec2(0.745, 0.4444);
+// 半径(？)
+const vec2 fLen = vec2(0.25, 0.4444) * 0.87;
+const vec2 rLen = vec2(0.25, 0.4444) * 0.87;
 
 void main() {
     //vColor = vec4(abs(position.x), abs(position.y), abs(position.z), 1.0);

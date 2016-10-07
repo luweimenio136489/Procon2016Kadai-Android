@@ -20,51 +20,27 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.ShortBuffer;
 
 import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL;
 
 public class MainActivity extends GvrActivity implements GvrView.StereoRenderer {
-    private static final String TAG = "MainActivity";
-
     /*
      * グローバル人材
      */
-    SphereModel sphereModel;
-    //CubeModel cubeModel;
-    int vbo, ibo; // Vertex/Index Buffer Object (id)
-    int texture;
-
-    /* 変換行列 */
-    private float[] modelMat;
-    private float[] viewMat;
-    /* たぶん変換行列 */
-    private float[] camera;
-    private float[] headView;
-
-    /* 何かの定数 */
-    private static final float CAMERA_Z = 0.01f;
-    private static final float Z_NEAR = 0.1f;
-    private static final float Z_FAR = 100.0f;
-
-    /* シェーダーのid的な */
-    private int front_program;
-    private int rear_program;
-    /* シェーダーパラメータのid的な */
-    private int frontPositionLoc;
-    private int frontMVPLoc;
-    private int rearPositionLoc;
-    private int rearMVPLoc;
-    private int textureLoc;
+    private static final String TAG = "MainActivity";
+    private SphereModel sphereModel;
+    private static final float CAMERA_Z = 0.01f, Z_NEAR = 0.1f, Z_FAR = 100.0f; // ？
+    private float[] modelMat, viewMat, camera, headView;    // 変換行列
+    private int vbo, ibo, texture;                          // バッファオブジェクト
+    private int program;                                    // シェーダー
+    private int positionLoc, mvpLoc, textureLoc;            // シェーダーパラメータ
 
     /*
-     * 初期化するメソッドたち
+     * 初期化
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         initializeGvrView();
 
         camera = new float[16];
@@ -76,8 +52,7 @@ public class MainActivity extends GvrActivity implements GvrView.StereoRenderer 
     @Override
     public void onSurfaceCreated(EGLConfig config) {
         Log.i(TAG, "onSurfaceCreated");
-        //GLES20.glClearColor(0.1f, 0.1f, 0.1f, 0.5f); // 闇
-        GLES20.glClearColor(1.0f, 0.0f, 0.0f, 0.5f);
+        GLES20.glClearColor(0.1f, 0.1f, 0.1f, 0.5f);
 
         /* モデルの生成 */
         sphereModel = new SphereModel();
@@ -86,29 +61,21 @@ public class MainActivity extends GvrActivity implements GvrView.StereoRenderer 
 
         /* シェーダーのコンパイルとリンク */
         int vShader = loadGLShader(GLES20.GL_VERTEX_SHADER, R.raw.vshader);
-        int fShader_front = loadGLShader(GLES20.GL_FRAGMENT_SHADER, R.raw.fshader_front);
-        int fShader_rear = loadGLShader(GLES20.GL_FRAGMENT_SHADER, R.raw.fshader_rear);
+        int fShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, R.raw.fshader);
 
-        front_program = GLES20.glCreateProgram();
-        GLES20.glAttachShader(front_program, vShader);
-        GLES20.glAttachShader(front_program, fShader_front);
-        GLES20.glLinkProgram(front_program);
-        GLES20.glUseProgram(front_program);
-
-        rear_program = GLES20.glCreateProgram();
-        GLES20.glAttachShader(rear_program, vShader);
-        GLES20.glAttachShader(rear_program, fShader_rear);
-        GLES20.glLinkProgram(rear_program);
-        GLES20.glUseProgram(rear_program);
+        program = GLES20.glCreateProgram();
+        GLES20.glAttachShader(program, vShader);
+        GLES20.glAttachShader(program, fShader);
+        GLES20.glLinkProgram(program);
+        GLES20.glUseProgram(program);
+        
         checkGLError("Sphere program");
 
         /* シェーダーに渡すものたち */
-        frontPositionLoc = GLES20.glGetAttribLocation(front_program, "position");
-        frontMVPLoc = GLES20.glGetUniformLocation(front_program, "mvpMat");
-        rearPositionLoc = GLES20.glGetAttribLocation(rear_program, "position");
-        rearMVPLoc = GLES20.glGetUniformLocation(rear_program, "mvpMat");
+        positionLoc = GLES20.glGetAttribLocation(program, "position");
+        mvpLoc = GLES20.glGetUniformLocation(program, "mvpMat");
 
-        textureLoc = GLES20.glGetUniformLocation(front_program, "texture");
+        textureLoc = GLES20.glGetUniformLocation(program, "texture");
 
         /* バッファオブジェクト */
         int[] buffers = new int[2];
@@ -137,7 +104,7 @@ public class MainActivity extends GvrActivity implements GvrView.StereoRenderer 
     }
 
     /*
-     * 毎回呼ばれるメソッドたち
+     * コールバック
      */
     /* フレームの描画前にOpenGL ESの準備をする */
     @Override
@@ -157,13 +124,13 @@ public class MainActivity extends GvrActivity implements GvrView.StereoRenderer 
         float[] perspective = eye.getPerspective(Z_NEAR, Z_FAR);
         float[] mvpMat = calcMVP(modelMat, viewMat, perspective);
 
-        GLES20.glUseProgram(front_program);
+        GLES20.glUseProgram(program);
 
-        GLES20.glUniformMatrix4fv(frontMVPLoc, 1, false, mvpMat, 0);
+        GLES20.glUniformMatrix4fv(mvpLoc, 1, false, mvpMat, 0);
 
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
         GLES20.glEnableVertexAttribArray(vbo);
-        GLES20.glVertexAttribPointer(frontPositionLoc, 3, GLES20.GL_FLOAT, false, 0, 0);
+        GLES20.glVertexAttribPointer(positionLoc, 3, GLES20.GL_FLOAT, false, 0, 0);
 
         GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, ibo);
 
@@ -310,7 +277,6 @@ public class MainActivity extends GvrActivity implements GvrView.StereoRenderer 
 
     @Override
     public void onFinishFrame(Viewport viewport) {
-        /* なにもしない */
     }
 
     @Override
