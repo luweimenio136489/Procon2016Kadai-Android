@@ -91,6 +91,9 @@ public class Model3D {
     }
 
     private void prepareIndices() {
+        uniqueVerticesList = new ArrayList<Vec3f>();
+        indicesList = new ArrayList<Short>();
+
         int dup = 0;
         for (int i = 0; i < arrayVerticesList.size(); i++) {
             Vec3f v = arrayVerticesList.get(i);
