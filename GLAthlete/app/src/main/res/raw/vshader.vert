@@ -1,3 +1,9 @@
+/*
+ * 頂点シェーダー
+ * テクスチャ座標の計算をGPUで行う
+ * シェーダーで条件分岐するのちょっとイヤなのでそのうち実装を変えるかも
+ */
+
 uniform mat4 mvpMat;
 attribute vec3 position;
 

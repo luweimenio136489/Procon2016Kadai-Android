@@ -2,6 +2,11 @@ package nittcprocon.glathlete;
 
 import java.util.List;
 
+/**
+ * 3頂点からなる三角形
+ * a, b, c の順に右回り
+ */
+
 public class Tri {
     public Vec3f a;
     public Vec3f b;

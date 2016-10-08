@@ -2,6 +2,11 @@ package nittcprocon.glathlete;
 
 import java.util.List;
 
+/**
+ * 4頂点からなる四角形
+ * a, b, c, d の順に右回り
+ */
+
 public class Quad {
     public Vec3f a;
     public Vec3f b;

@@ -23,11 +23,16 @@ import java.io.InputStreamReader;
 
 import javax.microedition.khronos.egl.EGLConfig;
 
-public class MainActivity extends GvrActivity implements GvrView.StereoRenderer {
+/**
+ * Google VR SDKを使って実際の描画を行う
+ * TODO: カリング
+ */
+
+public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
     /*
      * グローバル人材
      */
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "VRActivity";
     private SphereModel sphereModel;
     private static final float CAMERA_Z = 0.01f, Z_NEAR = 0.1f, Z_FAR = 100.0f; // ？
     private float[] modelMat, viewMat, camera, headView;    // 変換行列
@@ -84,12 +89,12 @@ public class MainActivity extends GvrActivity implements GvrView.StereoRenderer 
         ibo = buffers[1];
 
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
-        GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, Float.SIZE * sphereModel.vertNum(), sphereModel.vertices, GLES20.GL_STATIC_DRAW);
+        GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, Float.SIZE * sphereModel.vertNum(), sphereModel.getVertices(), GLES20.GL_STATIC_DRAW);
         checkGLError("Setting vbo");
         Log.d(TAG, "vbo: " + vbo + ", size: " + sphereModel.vertNum());
 
         GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, ibo);
-        GLES20.glBufferData(GLES20.GL_ELEMENT_ARRAY_BUFFER, Short.SIZE * sphereModel.indNum(), sphereModel.indices, GLES20.GL_STATIC_DRAW);
+        GLES20.glBufferData(GLES20.GL_ELEMENT_ARRAY_BUFFER, Short.SIZE * sphereModel.indNum(), sphereModel.getIndices(), GLES20.GL_STATIC_DRAW);
         checkGLError("Setting ibo");
         Log.d(TAG, "ibo: " + ibo + ", size: " + sphereModel.indNum());
 
@@ -145,6 +150,7 @@ public class MainActivity extends GvrActivity implements GvrView.StereoRenderer 
         // unbind
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
         GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
+        checkGLError("onDrawEye");
     }
 
     /*

@@ -2,6 +2,11 @@ package nittcprocon.glathlete;
 
 import java.util.List;
 
+/**
+ * floatで3要素のベクトル
+ * こんなの自分で作りたくない
+ */
+
 public class Vec3f {
     public float x;
     public float y;

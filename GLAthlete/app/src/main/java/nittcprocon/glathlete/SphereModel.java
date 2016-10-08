@@ -8,7 +8,6 @@ import static java.lang.Math.sin;
 
 /**
  * 球体のモデルを作って保持するクラス
- * 今の実装だと同じ位置に頂点が重なってもったいないけど真面目に考えるのがめんどくさいのでとりあえず放置
  */
 
 public class SphereModel extends Model3D {
