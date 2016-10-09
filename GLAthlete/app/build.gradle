@@ -27,7 +27,7 @@ dependencies {
     compile 'com.android.support:appcompat-v7:24.2.0'
     testCompile 'junit:junit:4.12'
 
-    compile project(':base')
-    compile project(':common')
+    compile project(':gvr-base')
+    compile project(':gvr-common')
     compile 'com.google.android.gms:play-services-appindexing:8.4.0'
 }

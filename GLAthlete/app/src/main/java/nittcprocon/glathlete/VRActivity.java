@@ -166,7 +166,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
     }
 
     public void initializeGvrView() {
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_vr);
 
         GvrView gvrView = (GvrView) findViewById(R.id.gvr_view);
         gvrView.setEGLConfigChooser(8, 8, 8, 8, 16, 8);
