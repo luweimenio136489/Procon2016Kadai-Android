@@ -1,8 +1,10 @@
 package nittcprocon.glathlete;
 
+import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
@@ -39,6 +41,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
     private int vbo, ibo, texture;                          // バッファオブジェクト
     private int program;                                    // シェーダー
     private int positionLoc, mvpLoc, textureLoc;            // シェーダーパラメータ
+    private Uri uri;                                        // RTSPストリームのURI
 
     /*
      * 初期化
@@ -52,6 +55,9 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         modelMat = new float[16];
         viewMat = new float[16];
         headView = new float[16];
+
+        Intent intent = getIntent();
+        uri = (Uri)intent.getSerializableExtra("uri");
     }
 
     @Override
