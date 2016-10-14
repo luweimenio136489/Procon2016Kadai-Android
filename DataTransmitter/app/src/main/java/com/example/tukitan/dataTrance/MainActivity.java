@@ -51,10 +51,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private float[] accel = new float[3];
     private double[] attitude = new double[2];
     double gravity;
+    boolean debugState=false;
     private static boolean whiteState = false;
     long startTime;
     //TextView sValue,aValue;
-    TextView state;
+    TextView state,xAccel,yAccel,zAccel,xAttitude,zAttitude,Grav;
     EditText counter;
     int time;
     private double[] initalizeAttitude = new double[2];
@@ -71,10 +72,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         // ボタンを設定
         ((Button) findViewById(R.id.stopButton)).setOnClickListener(this);
         ((Button) findViewById(R.id.initButton)).setOnClickListener(this);
-
+        ((Button) findViewById(R.id.debug)).setOnClickListener(this);
         state = (TextView) findViewById(R.id.genzai);
         counter = (EditText) findViewById(R.id.countTimer);
+
+        xAccel = (TextView) findViewById(R.id.xAcc);
+        yAccel = (TextView) findViewById(R.id.yAcc);
+        zAccel = (TextView) findViewById(R.id.zAcc);
+        xAttitude = (TextView) findViewById(R.id.xAtti);
+        zAttitude = (TextView) findViewById(R.id.yAtti);
+        Grav = (TextView) findViewById(R.id.grav);
         //androidがスリープモードにならないように
+        debugModeChange(false);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
@@ -92,6 +101,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 accel = event.values.clone();
                 attitude = getAttitude(accel);
                 gravity = getGravity(accel);
+                if(debugState) {
+                    xAccel.setText("X軸加速度："+Float.toString(accel[0]));
+                    yAccel.setText("Y軸加速度："+Float.toString(accel[2]));
+                    zAccel.setText("Z軸加速度："+Float.toString(accel[1]));
+                    xAttitude.setText("X軸の傾き："+Double.toString(attitude[0]));
+                    zAttitude.setText("Z軸の傾き："+Double.toString(attitude[1]));
+                    Grav.setText("重力方向加速度："+Double.toString(gravity));
+                }
                 break;
         }
     }
@@ -134,6 +151,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 state.setText("現在の状態：未初期化");
                 counter.setText(Integer.toString(10));
                 break;
+            case R.id.debug:
+                if (debugState) debugState = false;
+                else debugState = true;
+                debugModeChange(debugState);
         }
     }
 
@@ -155,6 +176,31 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         answer = answer - 9.8;
         return answer;
     }
+
+
+    /*
+    デバッグモードでの表示/非表示
+    state=true :表示
+    state = false :非表示
+     */
+    private void debugModeChange(boolean state){
+        if(state){
+            xAccel.setVisibility(View.VISIBLE);
+            yAccel.setVisibility(View.VISIBLE);
+            zAccel.setVisibility(View.VISIBLE);
+            xAttitude.setVisibility(View.VISIBLE);
+            zAttitude.setVisibility(View.VISIBLE);
+            Grav.setVisibility(View.VISIBLE);
+        } else {
+            xAccel.setVisibility(View.INVISIBLE);
+            yAccel.setVisibility(View.INVISIBLE);
+            zAccel.setVisibility(View.INVISIBLE);
+            xAttitude.setVisibility(View.INVISIBLE);
+            zAttitude.setVisibility(View.INVISIBLE);
+            Grav.setVisibility(View.INVISIBLE);
+        }
+    }
+
 
     //初期化までのカウントダウンスレッド
     private class CountDown extends CountDownTimer {

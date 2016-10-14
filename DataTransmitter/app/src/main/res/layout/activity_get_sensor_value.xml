@@ -83,6 +83,68 @@
         android:layout_below="@+id/por"
         android:layout_toEndOf="@+id/countTimer" />
 
+    <TextView
+        android:text="X軸加速度："
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/genzai"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="16dp"
+        android:id="@+id/xAcc" />
+
+    <TextView
+        android:text="Y軸加速度："
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/xAcc"
+        android:layout_alignStart="@+id/xAcc"
+        android:layout_marginTop="13dp"
+        android:id="@+id/yAcc" />
+
+    <TextView
+        android:text="Z軸加速度："
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/yAcc"
+        android:layout_alignStart="@+id/yAcc"
+        android:layout_marginTop="13dp"
+        android:id="@+id/zAcc" />
+
+    <TextView
+        android:text="X軸の傾き："
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/yAcc"
+        android:layout_toEndOf="@+id/countTimer"
+        android:layout_marginStart="46dp"
+        android:id="@+id/xAtti" />
+
+    <TextView
+        android:text="Z軸の傾き："
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/yAtti"
+        android:layout_alignBaseline="@+id/yAcc"
+        android:layout_alignBottom="@+id/yAcc"
+        android:layout_alignStart="@+id/xAtti" />
+
+    <TextView
+        android:text="重力方向加速度："
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/grav"
+        android:layout_alignBaseline="@+id/zAcc"
+        android:layout_alignBottom="@id/zAcc"
+        android:layout_alignStart="@+id/yAtti" />
+
+    <Button
+        android:text="Debug Mode"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/debug"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true" />
 
 
 </RelativeLayout>
