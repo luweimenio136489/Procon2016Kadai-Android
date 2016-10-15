@@ -1,16 +1,21 @@
 package nittcprocon.vrplayer;
 
+import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.google.vr.sdk.widgets.common.VrWidgetView;
 import com.google.vr.sdk.widgets.video.VrVideoEventListener;
@@ -33,9 +38,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        //フォルダを作る
-        mkdir("/sdcard/VRPlayer");
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
 
         //UDP通信開始
         StartUDP();
@@ -48,9 +51,19 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public boolean mkdir(String creatpath){
-        File file = new File(creatpath);
-        return file.mkdir();
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        //パーミッションの確認
+        if (requestCode ==100) {
+            //許可をくれるまでパーミッション許可のアラートダイアログを出し続ける
+            if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Please allow permission", Toast.LENGTH_LONG).show();
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
+            } else {
+                //フォルダ作成
+                Toast.makeText(this, "パーミッション許可確認", Toast.LENGTH_LONG).show();
+                new File(Environment.getExternalStorageDirectory() +"/VRPlayer/hoge.txt").getParentFile().mkdir();
+            }
+        }
     }
 
     @Override
@@ -96,6 +109,11 @@ public class MainActivity extends AppCompatActivity {
         // 表示
         alertDlg.create().show();
     }
+
+    /*public boolean mkdir(String creatpath){
+        File file = new File(creatpath);
+        return file.mkdir();
+    }*/
 
     public void StartUDP() {
         //Portの数値を"strport"(string型)へ(""の場合は"12345"とする)
@@ -163,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             VrVideoView.Options videoOptions = new VrVideoView.Options();
 
-            String path = "/sdcard/VRPlayer";
+            String path = Environment.getExternalStorageDirectory()+"/VRPlayer";
 
             //映像の種類
             videoOptions.inputType = VrVideoView.Options.TYPE_MONO;
