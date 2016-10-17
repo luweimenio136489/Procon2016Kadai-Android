@@ -32,12 +32,12 @@ public class MenuActivity extends AppCompatActivity {
         startButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startVRActivity(Uri.parse(uriEditText.getText().toString()));
+                startVRActivity(uriEditText.getText().toString());
             }
         });
     }
 
-    private void startVRActivity(Uri uri) {
+    private void startVRActivity(String uri) {
         Intent intent = new Intent(this, VRActivity.class);
         intent.putExtra("uri", uri);
         startActivity(intent);

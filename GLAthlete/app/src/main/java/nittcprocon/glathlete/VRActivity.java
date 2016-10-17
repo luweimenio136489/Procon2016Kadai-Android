@@ -4,12 +4,19 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.SurfaceTexture;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.net.Uri;
+import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
+import android.view.Surface;
+import android.view.TextureView;
 
 import com.google.vr.sdk.base.AndroidCompat;
 import com.google.vr.sdk.base.Eye;
@@ -37,11 +44,12 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
     private static final String TAG = "VRActivity";
     private SphereModel sphereModel;
     private static final float CAMERA_Z = 0.01f, Z_NEAR = 0.1f, Z_FAR = 100.0f; // ？
-    private float[] modelMat, viewMat, camera, headView;    // 変換行列
-    private int vbo, ibo, texture;                          // バッファオブジェクト
-    private int program;                                    // シェーダー
-    private int positionLoc, mvpLoc, textureLoc;            // シェーダーパラメータ
-    private Uri uri;                                        // RTSPストリームのURI
+    private float[] modelMat, viewMat, camera, headView, stTransform;   // 変換行列
+    private int vbo, ibo, texture;                                      // バッファオブジェクト
+    private int program;                                                // シェーダー
+    private int positionLoc, mvpLoc, textureLoc, stTransformLoc;        // シェーダーパラメータ
+    private String uri;                                                 // RTSPストリームのURI
+    private SurfaceTexture surfaceTexture;
 
     /*
      * 初期化
@@ -55,9 +63,11 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         modelMat = new float[16];
         viewMat = new float[16];
         headView = new float[16];
+        stTransform = new float[16];
 
         Intent intent = getIntent();
-        uri = (Uri)intent.getSerializableExtra("uri");
+        uri = intent.getStringExtra("uri");
+        Log.d(TAG, "URI: " + uri);
     }
 
     @Override
@@ -83,10 +93,10 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         checkGLError("Sphere program");
 
         /* シェーダーに渡すものたち */
-        positionLoc = GLES20.glGetAttribLocation(program, "position");
-        mvpLoc = GLES20.glGetUniformLocation(program, "mvpMat");
-
-        textureLoc = GLES20.glGetUniformLocation(program, "texture");
+        positionLoc     = GLES20.glGetAttribLocation(program, "position");
+        mvpLoc          = GLES20.glGetUniformLocation(program, "mvpMat");
+        textureLoc      = GLES20.glGetUniformLocation(program, "texture");
+        stTransformLoc  = GLES20.glGetUniformLocation(program, "stTransform");
 
         /* バッファオブジェクト */
         int[] buffers = new int[2];
@@ -104,25 +114,67 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         checkGLError("Setting ibo");
         Log.d(TAG, "ibo: " + ibo + ", size: " + sphereModel.indNum());
 
-        Resources resources = getResources();
-        Bitmap bmp = BitmapFactory.decodeResource(resources, R.raw.texture);
-        texture = loadTexture(bmp);
+        //Resources resources = getResources();
+        //Bitmap bmp = BitmapFactory.decodeResource(resources, R.raw.texture);
+        //texture = loadTexture(bmp);
+        texture = createTexture();
+        surfaceTexture = new SurfaceTexture(texture);
 
         /* 変換行列の設定 */
         Matrix.setIdentityM(modelMat, 0);
 
-        checkGLError("onSurfaceCreated");
+        startPlayback();
+    }
+
+    public void startPlayback() {
+        Surface surface = new Surface(surfaceTexture);
+        try {
+            Log.d(TAG, "creating MediaPlayer");
+            MediaPlayer mediaPlayer = new MediaPlayer();
+            mediaPlayer.setDataSource(getApplicationContext(), Uri.parse(uri));
+            //mediaPlayer.setDataSource("/storage/1e7917f2-0d9f-4f83-969d-1b8762ec2e52/R0010216.MP4");
+            mediaPlayer.setSurface(surface);
+            mediaPlayer.setLooping(false);
+
+            mediaPlayer.prepareAsync();
+
+            //mediaPlayer.setOnBufferingUpdateListener(this);
+            //mediaPlayer.setOnCompletionListener(this);
+            //mediaPlayer.setOnVideoSizeChangedListener(this);
+            mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+
+            mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mediaPlayer) {
+                    mediaPlayer.start();
+                    Log.d(TAG, "mediaPlayer.start()");
+                }
+            });
+
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /*
-     * コールバック
+     * コールバック(GvrView.StereoRenderer)
      */
+
+    @Override
+    public void onCardboardTrigger() {
+        Log.i(TAG, "onCardboardTrigger");
+        //startPlayback();
+    }
+
     /* フレームの描画前にOpenGL ESの準備をする */
     @Override
     public void onNewFrame(HeadTransform headTransform) {
         // 出力先, オフセット, 視点のx, y, z, 視点の中心のx, y, z, 上向きベクトルのx, y, z
         Matrix.setLookAtM(camera, 0, 0.0f, 0.0f, CAMERA_Z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
         headTransform.getHeadView(headView, 0); // これはなんだろう
+        surfaceTexture.updateTexImage();
+        surfaceTexture.getTransformMatrix(stTransform);
+        GLES20.glUniformMatrix4fv(stTransformLoc, 1, false, stTransform, 0);
         checkGLError("onNewFrame");
     }
 
@@ -150,7 +202,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         checkGLError("Drawing sphere");
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture);
+        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, texture);
         GLES20.glUniform1i(textureLoc, 0);
 
         // unbind
@@ -194,7 +246,6 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
             // sustained performance mode.
             AndroidCompat.setSustainedPerformanceMode(this, true);
         }
-
         setGvrView(gvrView);
     }
 
@@ -255,6 +306,20 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         return textureId;
     }
 
+    private int createTexture() {
+        int[] textureIds = new int[1];
+        GLES20.glGenTextures(1, textureIds, 0);
+        int textureId = textureIds[0];
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textureId);
+        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER,GLES20.GL_NEAREST);
+        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER,GLES20.GL_NEAREST);
+
+        checkGLError("createTexture");
+
+        return textureId;
+    }
+
     /* OpenGL ESの内部でエラーがないかチェックし、あったら例外を投げる */
     private static void checkGLError(String label) {
         int error;
@@ -296,10 +361,6 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         Log.i(TAG, "onRendererShutdown");
     }
 
-    @Override
-    public void onCardboardTrigger() {
-        Log.i(TAG, "onCardboardTrigger");
-    }
 
     @Override
     public void onSurfaceChanged(int width, int height) {
