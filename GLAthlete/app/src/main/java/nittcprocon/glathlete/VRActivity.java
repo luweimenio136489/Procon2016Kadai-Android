@@ -114,9 +114,6 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         checkGLError("Setting ibo");
         Log.d(TAG, "ibo: " + ibo + ", size: " + sphereModel.indNum());
 
-        //Resources resources = getResources();
-        //Bitmap bmp = BitmapFactory.decodeResource(resources, R.raw.texture);
-        //texture = loadTexture(bmp);
         texture = createTexture();
         surfaceTexture = new SurfaceTexture(texture);
 
@@ -288,24 +285,6 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         return shader;
     }
 
-    /* テクスチャを読み込む */
-    private int loadTexture(Bitmap bmp) {
-        //テクスチャメモリの確保
-        int[] textureIds = new int[1];
-        GLES20.glGenTextures(1, textureIds, 0);
-        int textureId = textureIds[0];
-
-        //テクスチャへのビットマップ指定
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bmp, 0);
-
-        //テクスチャフィルタの指定
-        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER,GLES20.GL_NEAREST);
-        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER,GLES20.GL_NEAREST);
-        return textureId;
-    }
-
     private int createTexture() {
         int[] textureIds = new int[1];
         GLES20.glGenTextures(1, textureIds, 0);
@@ -322,8 +301,8 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
 
     /* OpenGL ESの内部でエラーがないかチェックし、あったら例外を投げる */
     private static void checkGLError(String label) {
-        int error;
-        while ((error = GLES20.glGetError()) != GLES20.GL_NO_ERROR) {
+        int error = GLES20.glGetError();
+        if (error != GLES20.GL_NO_ERROR) {
             Log.e(TAG, label + ": glError " + error);
             throw new RuntimeException(label + ": glError " + error);
         }
