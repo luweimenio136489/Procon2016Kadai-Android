@@ -35,6 +35,7 @@ import javax.microedition.khronos.egl.EGLConfig;
 /**
  * Google VR SDKを使って実際の描画を行う
  * TODO: カリング
+ * FIXME: テクスチャユニットをTEXTURE0しか使わない前提になってる
  */
 
 public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
@@ -54,6 +55,33 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
     /*
      * 初期化
      */
+
+    public void initializeGvrView() {
+        setContentView(R.layout.activity_vr);
+
+        GvrView gvrView = (GvrView) findViewById(R.id.gvr_view);
+        gvrView.setEGLConfigChooser(8, 8, 8, 8, 16, 8);
+
+        gvrView.setRenderer(this);
+        gvrView.setTransitionViewEnabled(true);
+        gvrView.setOnCardboardBackButtonListener(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        onBackPressed();
+                    }
+                }
+        );
+
+        if (gvrView.setAsyncReprojectionEnabled(true)) {
+            // Async reprojection decouples the app framerate from the display framerate,
+            // allowing immersive interaction even at the throttled clockrates set by
+            // sustained performance mode.
+            AndroidCompat.setSustainedPerformanceMode(this, true);
+        }
+        setGvrView(gvrView);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -78,19 +106,9 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         /* モデルの生成 */
         sphereModel = new SphereModel();
         sphereModel.createBuffer();
-        Log.d(TAG, "Generated model, vertices: " + sphereModel.vertNum());
 
         /* シェーダーのコンパイルとリンク */
-        int vShader = loadGLShader(GLES20.GL_VERTEX_SHADER, R.raw.vshader);
-        int fShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, R.raw.fshader);
-
-        program = GLES20.glCreateProgram();
-        GLES20.glAttachShader(program, vShader);
-        GLES20.glAttachShader(program, fShader);
-        GLES20.glLinkProgram(program);
-        GLES20.glUseProgram(program);
-        
-        checkGLError("Sphere program");
+        program = createProgram(R.raw.vshader, R.raw.fshader);
 
         /* シェーダーに渡すものたち */
         positionLoc     = GLES20.glGetAttribLocation(program, "position");
@@ -99,20 +117,9 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         stTransformLoc  = GLES20.glGetUniformLocation(program, "stTransform");
 
         /* バッファオブジェクト */
-        int[] buffers = new int[2];
-        GLES20.glGenBuffers(2, buffers, 0);
+        int[] buffers = bindModel(sphereModel);
         vbo = buffers[0];
         ibo = buffers[1];
-
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
-        GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, Float.SIZE * sphereModel.vertNum(), sphereModel.getVertices(), GLES20.GL_STATIC_DRAW);
-        checkGLError("Setting vbo");
-        Log.d(TAG, "vbo: " + vbo + ", size: " + sphereModel.vertNum());
-
-        GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, ibo);
-        GLES20.glBufferData(GLES20.GL_ELEMENT_ARRAY_BUFFER, Short.SIZE * sphereModel.indNum(), sphereModel.getIndices(), GLES20.GL_STATIC_DRAW);
-        checkGLError("Setting ibo");
-        Log.d(TAG, "ibo: " + ibo + ", size: " + sphereModel.indNum());
 
         texture = createTexture();
         surfaceTexture = new SurfaceTexture(texture);
@@ -160,7 +167,6 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
     @Override
     public void onCardboardTrigger() {
         Log.i(TAG, "onCardboardTrigger");
-        //startPlayback();
     }
 
     /* フレームの描画前にOpenGL ESの準備をする */
@@ -169,9 +175,12 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         // 出力先, オフセット, 視点のx, y, z, 視点の中心のx, y, z, 上向きベクトルのx, y, z
         Matrix.setLookAtM(camera, 0, 0.0f, 0.0f, CAMERA_Z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
         headTransform.getHeadView(headView, 0); // これはなんだろう
+
         surfaceTexture.updateTexImage();
+        /* テクスチャバッファの変換行列 */
         surfaceTexture.getTransformMatrix(stTransform);
         GLES20.glUniformMatrix4fv(stTransformLoc, 1, false, stTransform, 0);
+
         checkGLError("onNewFrame");
     }
 
@@ -220,32 +229,6 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         return mvp;
     }
 
-    public void initializeGvrView() {
-        setContentView(R.layout.activity_vr);
-
-        GvrView gvrView = (GvrView) findViewById(R.id.gvr_view);
-        gvrView.setEGLConfigChooser(8, 8, 8, 8, 16, 8);
-
-        gvrView.setRenderer(this);
-        gvrView.setTransitionViewEnabled(true);
-        gvrView.setOnCardboardBackButtonListener(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        onBackPressed();
-                    }
-                }
-        );
-
-        if (gvrView.setAsyncReprojectionEnabled(true)) {
-            // Async reprojection decouples the app framerate from the display framerate,
-            // allowing immersive interaction even at the throttled clockrates set by
-            // sustained performance mode.
-            AndroidCompat.setSustainedPerformanceMode(this, true);
-        }
-        setGvrView(gvrView);
-    }
-
     /* 生リソースをテキストとして読み、Stringで返す */
     private String readRawTextFile(int resId) {
         InputStream inputStream = getResources().openRawResource(resId);
@@ -285,6 +268,21 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         return shader;
     }
 
+    private int createProgram(int resIdVert, int resIdFrag) {
+        int vShader = loadGLShader(GLES20.GL_VERTEX_SHADER, resIdVert);
+        int fShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, resIdFrag);
+
+        program = GLES20.glCreateProgram();
+        GLES20.glAttachShader(program, vShader);
+        GLES20.glAttachShader(program, fShader);
+        GLES20.glLinkProgram(program);
+        GLES20.glUseProgram(program);
+
+        checkGLError("createProgram");
+
+        return program;
+    }
+
     private int createTexture() {
         int[] textureIds = new int[1];
         GLES20.glGenTextures(1, textureIds, 0);
@@ -299,6 +297,24 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         return textureId;
     }
 
+    /* return new int[] {vbo, ibo} */
+    private int[] bindModel(Model3D model) {
+        int[] buffers = new int[2];
+        GLES20.glGenBuffers(2, buffers, 0);
+
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffers[0]);
+        GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, Float.SIZE * model.vertNum(), model.getVertices(), GLES20.GL_STATIC_DRAW);
+        checkGLError("Setting vbo");
+        Log.d(TAG, "vbo: " + buffers[0] + ", size: " + model.vertNum());
+
+        GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, buffers[1]);
+        GLES20.glBufferData(GLES20.GL_ELEMENT_ARRAY_BUFFER, Short.SIZE * model.indNum(), model.getIndices(), GLES20.GL_STATIC_DRAW);
+        checkGLError("Setting ibo");
+        Log.d(TAG, "ibo: " + buffers[1] + ", size: " + model.indNum());
+
+        return buffers;
+    }
+
     /* OpenGL ESの内部でエラーがないかチェックし、あったら例外を投げる */
     private static void checkGLError(String label) {
         int error = GLES20.glGetError();
@@ -306,6 +322,10 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
             Log.e(TAG, label + ": glError " + error);
             throw new RuntimeException(label + ": glError " + error);
         }
+    }
+
+    private void drawModel(Model3D model) {
+
     }
 
     /*
