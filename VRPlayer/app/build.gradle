@@ -5,8 +5,8 @@ android {
     buildToolsVersion "24.0.0"
     defaultConfig {
         applicationId "nittcprocon.vrplayer"
-        minSdkVersion 24
-        targetSdkVersion 24
+        minSdkVersion 19
+        targetSdkVersion 21
         versionCode 1
         versionName "1.0"
     }

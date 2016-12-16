@@ -51,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    /*
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         //パーミッションの確認
         if (requestCode ==100) {
@@ -65,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+    */
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -181,27 +183,30 @@ public class MainActivity extends AppCompatActivity {
         try {
             VrVideoView.Options videoOptions = new VrVideoView.Options();
 
-            String path = Environment.getExternalStorageDirectory()+"/VRPlayer";
+            //String path = Environment.getExternalStorageDirectory()+"/VRPlayer";
 
             //映像の種類
             videoOptions.inputType = VrVideoView.Options.TYPE_MONO;
 
             //filenameに拡張子をつける
             filename = filename + ".mp4";
+            Log.d("view", "filename :  " + filename);
 
 
             // HLS 配信の場合は、inputFormat に FORMAT_HLS を指定する。
             // HSL 配信以外は FORMAT_DEFAULT を指定する。
             videoOptions.inputFormat = VrVideoView.Options.FORMAT_DEFAULT;
 
+            /*
             // Networkから or 外部(内蔵)ストレージ(sdcard/など)から動画を取得
             Uri uri = Uri.parse(path + "/" + filename);
             videoView.loadVideo(uri, videoOptions);
+            */
 
-            /*
+
             // assetsから動画を取得
             videoView.loadVideoFromAsset(filename, videoOptions);
-            */
+
 
             //一時停止させる
             stop();
