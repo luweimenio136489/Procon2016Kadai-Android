@@ -289,6 +289,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         */
         String outputAttitude = System.currentTimeMillis() -startTime + "," +
                 str[0] + "," + str[1] + "," + String.format("%.4f",gravity) + "\r\n";
+        System.out.println(outputAttitude);
         FileOutputStream fos = null;
         //FileOutputStream fos2 = null;
         try {
