@@ -1,15 +1,24 @@
 apply plugin: 'com.android.application'
 
 android {
+    signingConfigs {
+        spckato {
+            keyAlias 'spc-kato'
+            keyPassword 'mokemoke'
+            storeFile file('/home/ntsc_j/AndroidStudioProjects/spc-kato.jks')
+            storePassword 'mokemoke'
+        }
+    }
     compileSdkVersion 24
-    buildToolsVersion "24.0.0"
+    buildToolsVersion '24.0.3'
     defaultConfig {
         applicationId "nittcprocon.glathlete"
         minSdkVersion 19
-        targetSdkVersion 24
+        targetSdkVersion 25
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        signingConfig signingConfigs.spckato
     }
     buildTypes {
         release {
@@ -17,16 +26,17 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    productFlavors {
+    }
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     compile 'com.android.support:appcompat-v7:24.2.0'
     testCompile 'junit:junit:4.12'
-
     compile project(':gvr-base')
     compile project(':gvr-common')
     compile 'com.google.android.gms:play-services-appindexing:8.4.0'
