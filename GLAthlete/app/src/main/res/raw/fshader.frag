@@ -1,3 +1,8 @@
+/*
+ * フラグメントシェーダ
+ * 頂点シェーダから受け取ったテクスチャ座標の色を出力する
+ */
+
 #extension GL_OES_EGL_image_external : require
 
 precision mediump float;
