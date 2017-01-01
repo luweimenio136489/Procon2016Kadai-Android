@@ -1,22 +1,16 @@
 package nittcprocon.glathlete;
 
 import android.content.Intent;
-import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.SurfaceTexture;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
-import android.opengl.GLUtils;
 import android.opengl.Matrix;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Surface;
-import android.view.TextureView;
 
 import com.google.vr.sdk.base.AndroidCompat;
 import com.google.vr.sdk.base.Eye;
@@ -29,8 +23,13 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Map;
+import java.util.HashMap;
 
 import javax.microedition.khronos.egl.EGLConfig;
+
+import static nittcprocon.glathlete.VRActivity.ShaderParameterQualifier.SPQ_Attribute;
+import static nittcprocon.glathlete.VRActivity.ShaderParameterQualifier.SPQ_Uniform;
 
 /**
  * Google VR SDKを使って実際の描画を行う
@@ -45,12 +44,34 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
     private static final String TAG = "VRActivity";
     private SphereModel sphereModel;
     private static final float CAMERA_Z = 0.01f, Z_NEAR = 0.1f, Z_FAR = 100.0f; // ？
-    private float[] modelMat, viewMat, camera, headView, stTransform;   // 変換行列
+    private float[] modelMat, viewMat, camera, stTransform;   // 変換行列
     private int vbo, ibo, texture;                                      // バッファオブジェクト
     private int program;                                                // シェーダー
-    private int positionLoc, mvpLoc, textureLoc, stTransformLoc;        // シェーダーパラメータ
     private String uri;                                                 // RTSPストリームのURI
     private SurfaceTexture surfaceTexture;
+
+    /* FIXME: クソ */
+    enum ShaderParameterQualifier {SPQ_Attribute, SPQ_Uniform}
+    private Map<String, ShaderParameterQualifier> shaderParamsUsed = new HashMap<String, ShaderParameterQualifier>() {
+        /* vertex shader */
+        {put("position", SPQ_Attribute);}
+        {put("mvpMat", SPQ_Uniform);}
+        {put("stTransform", SPQ_Uniform);}
+        {put("fLen", SPQ_Uniform);}
+        {put("rLen", SPQ_Uniform);}
+        {put("fCenter", SPQ_Uniform);}
+        {put("rCenter", SPQ_Uniform);}
+        /* fragment shader */
+        {put("texture", SPQ_Uniform);}
+    };
+    private Map<String, Integer> shaderParamsLoc = new HashMap<>(); // シェーダーパラメータ<名前, location>
+
+
+    /* とりあえず */
+    private float[] fLen = {(float)(0.25 * 0.9), (float)(0.4444 * 0.9)};
+    private float[] rLen = {(float)(0.25 * 0.9), (float)(0.4444 * 0.9)};
+    private float[] fCenter = {(float)0.25, (float)0.4444};
+    private float[] rCenter = {(float)0.75, (float)0.4444};
 
     /*
      * 初期化
@@ -85,12 +106,12 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate");
         initializeGvrView();
 
         camera = new float[16];
         modelMat = new float[16];
         viewMat = new float[16];
-        headView = new float[16];
         stTransform = new float[16];
 
         Intent intent = getIntent();
@@ -111,10 +132,26 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         program = createProgram(R.raw.vshader, R.raw.fshader);
 
         /* シェーダーに渡すものたち */
-        positionLoc     = GLES20.glGetAttribLocation(program, "position");
-        mvpLoc          = GLES20.glGetUniformLocation(program, "mvpMat");
-        textureLoc      = GLES20.glGetUniformLocation(program, "texture");
-        stTransformLoc  = GLES20.glGetUniformLocation(program, "stTransform");
+        for (Map.Entry<String, ShaderParameterQualifier> e : shaderParamsUsed.entrySet()) {
+            switch (e.getValue()) {
+                case SPQ_Attribute:
+                    shaderParamsLoc.put(e.getKey(), GLES20.glGetAttribLocation(program, e.getKey()));
+                    Log.d(TAG, "attribute " + e.getKey() + "'s location is " + shaderParamsLoc.get(e.getKey()).toString());
+                    break;
+                case SPQ_Uniform:
+                    shaderParamsLoc.put(e.getKey(), GLES20.glGetUniformLocation(program, e.getKey()));
+                    Log.d(TAG, "uniform " + e.getKey() + "'s location is " + shaderParamsLoc.get(e.getKey()).toString());
+                    break;
+                default:
+                    Log.e(TAG, "AIEEEEEEEE");
+            }
+        }
+
+        /* 定数 */
+        GLES20.glUniform2fv(shaderParamsLoc.get("fCenter"), 1, fCenter, 0);
+        GLES20.glUniform2fv(shaderParamsLoc.get("rCenter"), 1, rCenter, 0);
+        GLES20.glUniform2fv(shaderParamsLoc.get("fLen"), 1, fLen, 0);
+        GLES20.glUniform2fv(shaderParamsLoc.get("rLen"), 1, rLen, 0);
 
         /* バッファオブジェクト */
         int[] buffers = bindModel(sphereModel);
@@ -135,8 +172,11 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         try {
             Log.d(TAG, "creating MediaPlayer");
             MediaPlayer mediaPlayer = new MediaPlayer();
-            mediaPlayer.setDataSource(getApplicationContext(), Uri.parse(uri));
-            //mediaPlayer.setDataSource("/storage/1e7917f2-0d9f-4f83-969d-1b8762ec2e52/R0010216.MP4");
+            if (uri.equals("DEBUG")) {
+                mediaPlayer.setDataSource("/storage/1e7917f2-0d9f-4f83-969d-1b8762ec2e52/R0010216.MP4");
+            } else {
+                mediaPlayer.setDataSource(getApplicationContext(), Uri.parse(uri));
+            }
             mediaPlayer.setSurface(surface);
             mediaPlayer.setLooping(false);
 
@@ -164,22 +204,17 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
      * コールバック(GvrView.StereoRenderer)
      */
 
-    @Override
-    public void onCardboardTrigger() {
-        Log.i(TAG, "onCardboardTrigger");
-    }
-
     /* フレームの描画前にOpenGL ESの準備をする */
+    /* FIXME: なんか失敗してる？(glError 1282: GL_INVALID_OPERATION) */
     @Override
     public void onNewFrame(HeadTransform headTransform) {
         // 出力先, オフセット, 視点のx, y, z, 視点の中心のx, y, z, 上向きベクトルのx, y, z
         Matrix.setLookAtM(camera, 0, 0.0f, 0.0f, CAMERA_Z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-        headTransform.getHeadView(headView, 0); // これはなんだろう
 
         surfaceTexture.updateTexImage();
         /* テクスチャバッファの変換行列 */
         surfaceTexture.getTransformMatrix(stTransform);
-        GLES20.glUniformMatrix4fv(stTransformLoc, 1, false, stTransform, 0);
+        GLES20.glUniformMatrix4fv(shaderParamsLoc.get("stTransform"), 1, false, stTransform, 0);
 
         checkGLError("onNewFrame");
     }
@@ -195,11 +230,11 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
 
         GLES20.glUseProgram(program);
 
-        GLES20.glUniformMatrix4fv(mvpLoc, 1, false, mvpMat, 0);
+        GLES20.glUniformMatrix4fv(shaderParamsLoc.get("mvpMat"), 1, false, mvpMat, 0);
 
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
         GLES20.glEnableVertexAttribArray(vbo);
-        GLES20.glVertexAttribPointer(positionLoc, 3, GLES20.GL_FLOAT, false, 0, 0);
+        GLES20.glVertexAttribPointer(shaderParamsLoc.get("position"), 3, GLES20.GL_FLOAT, false, 0, 0);
 
         GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, ibo);
 
@@ -209,7 +244,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, texture);
-        GLES20.glUniform1i(textureLoc, 0);
+        GLES20.glUniform1i(shaderParamsLoc.get("texture"), 0);
 
         // unbind
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
@@ -324,10 +359,6 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         }
     }
 
-    private void drawModel(Model3D model) {
-
-    }
-
     /*
      * ここから下はどうでもいいやつ
      */
@@ -364,5 +395,10 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
     @Override
     public void onSurfaceChanged(int width, int height) {
         Log.i(TAG, "onSurfaceChanged");
+    }
+
+    @Override
+    public void onCardboardTrigger() {
+        Log.i(TAG, "onCardboardTrigger");
     }
 }
