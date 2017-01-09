@@ -11,7 +11,9 @@
         android:title="@string/debug"
         android:key="pref_key_debug">
         <Preference android:title="@string/debug_mode">
-            <intent></intent>
+            <intent android:action="android.intent.action.VIEW"
+                    android:targetPackage="nittcprocon.glathlete"
+                    android:targetClass="nittcprocon.glathlete.FileChoosingActivity" />
         </Preference>
     </PreferenceCategory>
 </PreferenceScreen>

@@ -170,11 +170,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         try {
             Log.d(TAG, "creating MediaPlayer");
             MediaPlayer mediaPlayer = new MediaPlayer();
-            if (uri.equals("DEBUG")) {
-                mediaPlayer.setDataSource("/storage/1e7917f2-0d9f-4f83-969d-1b8762ec2e52/R0010216.MP4");
-            } else {
-                mediaPlayer.setDataSource(getApplicationContext(), Uri.parse(uri));
-            }
+            mediaPlayer.setDataSource(getApplicationContext(), Uri.parse(uri));
             mediaPlayer.setSurface(surface);
             mediaPlayer.setLooping(false);
 

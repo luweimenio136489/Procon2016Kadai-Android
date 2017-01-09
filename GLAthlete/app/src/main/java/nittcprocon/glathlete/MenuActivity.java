@@ -35,7 +35,6 @@ public class MenuActivity extends AppCompatActivity {
         uriEditText = (EditText) findViewById(R.id.uriEditText);
         startButton = (Button) findViewById(R.id.startButton);
         ipAddrTextView = (TextView) findViewById(R.id.ipAddrTextView);
-        startDebugButton = (Button) findViewById(R.id.startDebugButton);
 
         ipAddrTextView.setText(getLocalIpAddress());
         startButton.setOnClickListener(new View.OnClickListener() {
