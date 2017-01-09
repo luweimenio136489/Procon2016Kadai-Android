@@ -8,9 +8,11 @@ import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import static nittcprocon.glathlete.Types.*;
 
 /**
- * モデルの頂点を保持するクラス
+ * モデルの頂点・インデックスバッファの生データを保持するクラス
+ * addXXX()を呼んでポリゴンを追加する
  * getXXX()というメソッドが軽量アクセサとは限らないので注意
  */
 
@@ -82,6 +84,10 @@ public class Model3D {
         isBufferFresh = true;
     }
 
+    public int numberOfUniqueVertices() {
+        return uniqueVerticesList.size();
+    }
+
     public int vertNum() {
         return uniqueVerticesList.size() * 3;
     }
@@ -104,7 +110,26 @@ public class Model3D {
                 uniqueVerticesList.add(v);
                 indicesList.add((short)(i - dup));
             }
-
         }
+    }
+
+    // FIXME: 微妙
+    public interface AttribCalculator {
+        public abstract Vec2f texCoordAt(Vec3f xyz);
+    }
+
+    @FunctionalInterface
+    public interface ModelGenerator {
+        public abstract ArrayList<Vec3f> generateModel();
+    }
+
+    public void generateModelWith(ModelGenerator modelGenerator) {
+        isBufferFresh = false;
+        arrayVerticesList = modelGenerator.generateModel();
+        createBuffer();
+    }
+
+    public void addAttribCalculatedWith(AttribCalculator attribCalculator) {
+
     }
 }

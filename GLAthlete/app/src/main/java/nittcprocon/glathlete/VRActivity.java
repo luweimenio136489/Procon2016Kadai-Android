@@ -42,15 +42,15 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
      * グローバル人材
      */
     private static final String TAG = "VRActivity";
-    private SphereModel sphereModel;
+    private Model3D sphereModel;
     private static final float CAMERA_Z = 0.01f, Z_NEAR = 0.1f, Z_FAR = 100.0f; // ？
     private float[] modelMat, viewMat, camera, stTransform;   // 変換行列
-    private int vbo, ibo, texture;                                      // バッファオブジェクト
-    private int program;                                                // シェーダー
-    private String uri;                                                 // RTSPストリームのURI
+    private int vbo, ibo, texture;                            // バッファオブジェクト
+    private int program;                                      // シェーダー
+    private String uri;                                       // RTSPストリームのURI
     private SurfaceTexture surfaceTexture;
 
-    /* FIXME: クソ */
+    // FIXME: クソ
     enum ShaderParameterQualifier {SPQ_Attribute, SPQ_Uniform}
     private Map<String, ShaderParameterQualifier> shaderParamsUsed = new HashMap<String, ShaderParameterQualifier>() {
         /* vertex shader */
@@ -65,7 +65,6 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         {put("texture", SPQ_Uniform);}
     };
     private Map<String, Integer> shaderParamsLoc = new HashMap<>(); // シェーダーパラメータ<名前, location>
-
 
     /* とりあえず */
     private float[] fLen = {(float)(0.25 * 0.9), (float)(0.4444 * 0.9)};
@@ -125,8 +124,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         GLES20.glClearColor(0.1f, 0.1f, 0.1f, 0.5f);
 
         /* モデルの生成 */
-        sphereModel = new SphereModel();
-        sphereModel.createBuffer();
+        sphereModel = new SphereModelCreator().getSphereModel();
 
         /* シェーダーのコンパイルとリンク */
         program = createProgram(R.raw.vshader, R.raw.fshader);

@@ -1,31 +1,24 @@
 package nittcprocon.glathlete;
 
 import android.util.Log;
-
 import static java.lang.Math.PI;
 import static java.lang.Math.cos;
 import static java.lang.Math.sin;
+import static nittcprocon.glathlete.Types.*;
 
-/**
- * 球体のモデルを作って保持するクラス
- */
+public class SphereModelCreator {
+    private static final String TAG = "SphereModelCreator";
+    private static final float RADIUS_DEFAULT = 1.0f;
+    private static final int STACKS_DEFAULT = 24, SLICES_DEFAULT = 24;
 
-public class SphereModel extends Model3D {
-    private static final String TAG = "SphereModel";
-    static final int STACKS_DEFAULT = 24;
-    static final int SLICES_DEFAULT = 24;
-    static final float RADIUS_DEFAULT = 1.0f;
+    private Model3D sphereModel;
 
-    SphereModel() {
+    public SphereModelCreator() {
         this(RADIUS_DEFAULT, STACKS_DEFAULT, SLICES_DEFAULT);
     }
 
-    SphereModel(float radius) {
-        this(radius, STACKS_DEFAULT, SLICES_DEFAULT);
-    }
-
-    SphereModel(float radius, int stacks, int slices) {
-        super();
+    public SphereModelCreator(float radius, int stacks, int slices) {
+        sphereModel = new Model3D();
         for (int t = 0; t < stacks; t++) {
             float theta1 = (float)PI * t / stacks;
             float theta2 = (float)PI * (t + 1) / stacks;
@@ -39,16 +32,19 @@ public class SphereModel extends Model3D {
                 Vec3f v4 = rtp2xyz(radius, theta2, phi1);
 
                 if (t == 0) {                       // top cap, v1 == v2
-                    addTri(new Tri(v2, v3, v4));
+                    sphereModel.addTri(new Tri(v2, v3, v4));
                 } else if (t + 1 == stacks) {       // bottom cap, v3 == v4
-                    addTri(new Tri(v1, v2, v3));
+                    sphereModel.addTri(new Tri(v1, v2, v3));
                 } else {
-                    addQuad(new Quad(v1, v2, v3, v4));
+                    sphereModel.addQuad(new Quad(v1, v2, v3, v4));
                 }
             }
         }
-        Log.d(TAG, "Generated " + vertNum() + " vertices & " + indNum() + " indices");
-        this.createBuffer();
+        sphereModel.createBuffer();
+    }
+
+    public Model3D getSphereModel() {
+        return sphereModel;
     }
 
     // r, θ, φ から Vec3f(x, y, z)に
