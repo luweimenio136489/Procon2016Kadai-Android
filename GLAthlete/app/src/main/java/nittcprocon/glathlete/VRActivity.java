@@ -23,13 +23,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.microedition.khronos.egl.EGLConfig;
 
-import static nittcprocon.glathlete.VRActivity.ShaderParameterQualifier.SPQ_Attribute;
-import static nittcprocon.glathlete.VRActivity.ShaderParameterQualifier.SPQ_Uniform;
+import static nittcprocon.glathlete.ShaderProgram.Parameter.Qualifier.Attribute;
+import static nittcprocon.glathlete.ShaderProgram.Parameter.Qualifier.Uniform;
 
 /**
  * Google VR SDKを使って実際の描画を行う
@@ -46,26 +47,10 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
     private static final float CAMERA_Z = 0.01f, Z_NEAR = 0.1f, Z_FAR = 100.0f; // ？
     private float[] modelMat, viewMat, camera, stTransform;   // 変換行列
     private int vbo, ibo, texture;                            // バッファオブジェクト
-    private int program;                                      // シェーダー
+    private ShaderProgram sphereShader;
     private String uri;                                       // RTSPストリームのURI
     private SurfaceTexture surfaceTexture;
     private MediaPlayer mediaPlayer;
-
-    // FIXME: クソ
-    enum ShaderParameterQualifier {SPQ_Attribute, SPQ_Uniform}
-    private Map<String, ShaderParameterQualifier> shaderParamsUsed = new HashMap<String, ShaderParameterQualifier>() {
-        /* vertex shader */
-        {put("position", SPQ_Attribute);}
-        {put("mvpMat", SPQ_Uniform);}
-        {put("stTransform", SPQ_Uniform);}
-        {put("fLen", SPQ_Uniform);}
-        {put("rLen", SPQ_Uniform);}
-        {put("fCenter", SPQ_Uniform);}
-        {put("rCenter", SPQ_Uniform);}
-        /* fragment shader */
-        {put("texture", SPQ_Uniform);}
-    };
-    private Map<String, Integer> shaderParamsLoc = new HashMap<>(); // シェーダーパラメータ<名前, location>
 
     /* とりあえず */
     private float[] fLen = {(float)(0.25 * 0.9), (float)(0.4444 * 0.9)};
@@ -103,6 +88,22 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         setGvrView(gvrView);
     }
 
+    /* なんだこれは！！！！！ */
+    private void prepareSphereShader() {
+        Set<ShaderProgram.Parameter> sphereShaderParams = new HashSet<>();
+        Collections.addAll(sphereShaderParams,
+                new ShaderProgram.Parameter(Attribute, "position"),
+                new ShaderProgram.Parameter(Uniform, "mvpMat"),
+                new ShaderProgram.Parameter(Uniform, "stTransform"),
+                new ShaderProgram.Parameter(Uniform, "fLen"),
+                new ShaderProgram.Parameter(Uniform, "rLen"),
+                new ShaderProgram.Parameter(Uniform, "fCenter"),
+                new ShaderProgram.Parameter(Uniform, "rCenter"),
+                new ShaderProgram.Parameter(Uniform, "texture")
+        );
+        sphereShader.setParamInfo(sphereShaderParams);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -128,29 +129,18 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         sphereModel = new SphereModelCreator().getSphereModel();
 
         /* シェーダーのコンパイルとリンク */
-        program = createProgram(R.raw.vshader, R.raw.fshader);
-
-        /* シェーダーに渡すものたち */
-        for (Map.Entry<String, ShaderParameterQualifier> e : shaderParamsUsed.entrySet()) {
-            switch (e.getValue()) {
-                case SPQ_Attribute:
-                    shaderParamsLoc.put(e.getKey(), GLES20.glGetAttribLocation(program, e.getKey()));
-                    Log.d(TAG, "attribute " + e.getKey() + "'s location is " + shaderParamsLoc.get(e.getKey()).toString());
-                    break;
-                case SPQ_Uniform:
-                    shaderParamsLoc.put(e.getKey(), GLES20.glGetUniformLocation(program, e.getKey()));
-                    Log.d(TAG, "uniform " + e.getKey() + "'s location is " + shaderParamsLoc.get(e.getKey()).toString());
-                    break;
-                default:
-                    Log.e(TAG, "AIEEEEEEEE");
-            }
-        }
+        //program = createProgram(R.raw.vshader, R.raw.fshader);
+        String sVShader = readRawTextFile(R.raw.vshader);
+        String sFShader = readRawTextFile(R.raw.fshader);
+        sphereShader = new ShaderProgram(sVShader, sFShader);
+        prepareSphereShader();
+        int program = sphereShader.getProgram();
 
         /* 定数 */
-        GLES20.glUniform2fv(shaderParamsLoc.get("fCenter"), 1, fCenter, 0);
-        GLES20.glUniform2fv(shaderParamsLoc.get("rCenter"), 1, rCenter, 0);
-        GLES20.glUniform2fv(shaderParamsLoc.get("fLen"), 1, fLen, 0);
-        GLES20.glUniform2fv(shaderParamsLoc.get("rLen"), 1, rLen, 0);
+        GLES20.glUniform2fv(sphereShader.getLocationOf("fCenter"), 1, fCenter, 0);
+        GLES20.glUniform2fv(sphereShader.getLocationOf("rCenter"), 1, rCenter, 0);
+        GLES20.glUniform2fv(sphereShader.getLocationOf("fLen"), 1, fLen, 0);
+        GLES20.glUniform2fv(sphereShader.getLocationOf("rLen"), 1, rLen, 0);
 
         /* バッファオブジェクト */
         int[] buffers = bindModel(sphereModel);
@@ -209,7 +199,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         surfaceTexture.updateTexImage();
         /* テクスチャバッファの変換行列 */
         surfaceTexture.getTransformMatrix(stTransform);
-        GLES20.glUniformMatrix4fv(shaderParamsLoc.get("stTransform"), 1, false, stTransform, 0);
+        GLES20.glUniformMatrix4fv(sphereShader.getLocationOf("stTransform"), 1, false, stTransform, 0);
 
         checkGLError("onNewFrame");
     }
@@ -222,14 +212,15 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         Matrix.multiplyMM(viewMat, 0, eye.getEyeView(), 0, camera, 0);
         float[] perspective = eye.getPerspective(Z_NEAR, Z_FAR);
         float[] mvpMat = calcMVP(modelMat, viewMat, perspective);
+        int program = sphereShader.getProgram();
 
         GLES20.glUseProgram(program);
 
-        GLES20.glUniformMatrix4fv(shaderParamsLoc.get("mvpMat"), 1, false, mvpMat, 0);
+        GLES20.glUniformMatrix4fv(sphereShader.getLocationOf("mvpMat"), 1, false, mvpMat, 0);
 
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
         GLES20.glEnableVertexAttribArray(vbo);
-        GLES20.glVertexAttribPointer(shaderParamsLoc.get("position"), 3, GLES20.GL_FLOAT, false, 0, 0);
+        GLES20.glVertexAttribPointer(sphereShader.getLocationOf("position"), 3, GLES20.GL_FLOAT, false, 0, 0);
 
         GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, ibo);
 
@@ -239,7 +230,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, texture);
-        GLES20.glUniform1i(shaderParamsLoc.get("texture"), 0);
+        GLES20.glUniform1i(sphereShader.getLocationOf("texture"), 0);
 
         // unbind
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
@@ -297,7 +288,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
 
         return shader;
     }
-
+/*
     private int createProgram(int resIdVert, int resIdFrag) {
         int vShader = loadGLShader(GLES20.GL_VERTEX_SHADER, resIdVert);
         int fShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, resIdFrag);
@@ -312,7 +303,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
 
         return program;
     }
-
+*/
     private int createTexture() {
         int[] textureIds = new int[1];
         GLES20.glGenTextures(1, textureIds, 0);
