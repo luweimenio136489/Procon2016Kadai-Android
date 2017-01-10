@@ -38,5 +38,6 @@ public class FileChoosingActivity extends AppCompatActivity {
         } else {
             Log.e(TAG, "AIEEE");
         }
+        finish();
     }
 }
