@@ -49,6 +49,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
     private int program;                                      // シェーダー
     private String uri;                                       // RTSPストリームのURI
     private SurfaceTexture surfaceTexture;
+    private MediaPlayer mediaPlayer;
 
     // FIXME: クソ
     enum ShaderParameterQualifier {SPQ_Attribute, SPQ_Uniform}
@@ -169,7 +170,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         Surface surface = new Surface(surfaceTexture);
         try {
             Log.d(TAG, "creating MediaPlayer");
-            MediaPlayer mediaPlayer = new MediaPlayer();
+            mediaPlayer = new MediaPlayer();
             mediaPlayer.setDataSource(getApplicationContext(), Uri.parse(uri));
             mediaPlayer.setSurface(surface);
             mediaPlayer.setLooping(false);
@@ -353,17 +354,24 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         }
     }
 
+    @Override
+    public void onStop() {
+        super.onStop();
+        mediaPlayer.stop();
+    }
+
+    @Override
+    public void onRendererShutdown() {
+        Log.i(TAG, "onRendererShutdown");
+        mediaPlayer.stop();
+    }
+
     /*
      * ここから下はどうでもいいやつ
      */
     @Override
     public void onStart() {
         super.onStart();
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
     }
 
     @Override
@@ -379,12 +387,6 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
     @Override
     public void onFinishFrame(Viewport viewport) {
     }
-
-    @Override
-    public void onRendererShutdown() {
-        Log.i(TAG, "onRendererShutdown");
-    }
-
 
     @Override
     public void onSurfaceChanged(int width, int height) {
