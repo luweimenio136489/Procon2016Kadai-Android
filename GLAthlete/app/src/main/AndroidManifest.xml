@@ -23,17 +23,17 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".VRActivity"
-            android:screenOrientation="landscape"></activity>
+            android:screenOrientation="landscape" />
         <activity android:name=".MenuActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="com.google.intent.category.CARDBOARD" />
             </intent-filter>
         </activity>
-        <activity android:name=".SettingsActivity"></activity>
-        <activity android:name=".FileChoosingActivity"></activity>
+        <activity android:name=".SettingsActivity" />
+        <activity android:name=".FileChoosingActivity" />
+        <activity android:name=".VisualAdjustmentActivity" />
     </application>
 
 </manifest>

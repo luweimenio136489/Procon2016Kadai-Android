@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory
-        android:title="@string/adjustment"
+        android:title="@string/adjust_mapping"
         android:key="pref_key_adjustment">
-        <Preference android:title="@string/adjust_mapping">
-            <intent></intent>
+        <Preference android:title="@string/adjust_mapping_visual">
+            <intent android:action="android.intent.action.VIEW"
+                    android:targetPackage="nittcprocon.glathlete"
+                    android:targetClass="nittcprocon.glathlete.VisualAdjustmentActivity"/>
         </Preference>
     </PreferenceCategory>
     <PreferenceCategory
