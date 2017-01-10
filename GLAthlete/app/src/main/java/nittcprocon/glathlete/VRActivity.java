@@ -268,42 +268,6 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         return null;
     }
 
-    /* 生リソースをシェーダーとして読み込む */
-    private int loadGLShader(int type, int resId) {
-        String code = readRawTextFile(resId);
-        int shader = GLES20.glCreateShader(type);
-        GLES20.glShaderSource(shader, code);
-        GLES20.glCompileShader(shader);
-
-        // Get the compilation status.
-        final int[] compileStatus = new int[1];
-        GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compileStatus, 0);
-
-        // If the compilation failed, delete the shader.
-        if (compileStatus[0] == 0) {
-            Log.e(TAG, "Error compiling shader: " + GLES20.glGetShaderInfoLog(shader));
-            GLES20.glDeleteShader(shader);
-            throw new RuntimeException("Error creating shader.");
-        }
-
-        return shader;
-    }
-/*
-    private int createProgram(int resIdVert, int resIdFrag) {
-        int vShader = loadGLShader(GLES20.GL_VERTEX_SHADER, resIdVert);
-        int fShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, resIdFrag);
-
-        program = GLES20.glCreateProgram();
-        GLES20.glAttachShader(program, vShader);
-        GLES20.glAttachShader(program, fShader);
-        GLES20.glLinkProgram(program);
-        GLES20.glUseProgram(program);
-
-        checkGLError("createProgram");
-
-        return program;
-    }
-*/
     private int createTexture() {
         int[] textureIds = new int[1];
         GLES20.glGenTextures(1, textureIds, 0);
