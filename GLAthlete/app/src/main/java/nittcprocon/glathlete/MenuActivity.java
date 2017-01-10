@@ -25,7 +25,6 @@ public class MenuActivity extends AppCompatActivity {
     private TextView ipAddrTextView;
     private EditText uriEditText;
     private Button startButton;
-    private Button startDebugButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,12 +40,6 @@ public class MenuActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 startVRActivity(uriEditText.getText().toString());
-            }
-        });
-        startDebugButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startVRActivity("DEBUG");
             }
         });
     }
