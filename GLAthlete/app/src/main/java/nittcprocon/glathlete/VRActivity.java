@@ -40,7 +40,8 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
     private Model3D sphereModel;
     private static final float CAMERA_Z = 0.01f, Z_NEAR = 0.1f, Z_FAR = 100.0f; // ？
     private float[] modelMat, viewMat, camera, stTransform;   // 変換行列
-    private int vbo, ibo, texture;                            // バッファオブジェクト
+    private int texture;
+    private ModelBuffer sphereBuffer;
     private ShaderProgram sphereShader;
     private String uri;                                       // RTSPストリームのURI
     private SurfaceTexture surfaceTexture;
@@ -118,9 +119,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         GLES20.glUniform2fv(sphereShader.getLocationOf("rLen"), 1, rLen, 0);
 
         /* バッファオブジェクト */
-        int[] buffers = bindModel(sphereModel);
-        vbo = buffers[0];
-        ibo = buffers[1];
+        sphereBuffer = new ModelBuffer(sphereModel);
 
         texture = createTexture();
         surfaceTexture = new SurfaceTexture(texture);
@@ -188,6 +187,8 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         float[] perspective = eye.getPerspective(Z_NEAR, Z_FAR);
         float[] mvpMat = calcMVP(modelMat, viewMat, perspective);
         int program = sphereShader.getProgram();
+        int vbo = sphereBuffer.getVbo();
+        int ibo = sphereBuffer.getIbo();
 
         GLES20.glUseProgram(program);
 
@@ -255,24 +256,6 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         checkGLError("createTexture");
 
         return textureId;
-    }
-
-    /* return new int[] {vbo, ibo} */
-    private int[] bindModel(Model3D model) {
-        int[] buffers = new int[2];
-        GLES20.glGenBuffers(2, buffers, 0);
-
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffers[0]);
-        GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, Float.SIZE * model.vertNum(), model.getVertices(), GLES20.GL_STATIC_DRAW);
-        checkGLError("Setting vbo");
-        Log.d(TAG, "vbo: " + buffers[0] + ", size: " + model.vertNum());
-
-        GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, buffers[1]);
-        GLES20.glBufferData(GLES20.GL_ELEMENT_ARRAY_BUFFER, Short.SIZE * model.indNum(), model.getIndices(), GLES20.GL_STATIC_DRAW);
-        checkGLError("Setting ibo");
-        Log.d(TAG, "ibo: " + buffers[1] + ", size: " + model.indNum());
-
-        return buffers;
     }
 
     /* OpenGL ESの内部でエラーがないかチェックし、あったら例外を投げる */
