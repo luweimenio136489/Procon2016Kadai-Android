@@ -126,13 +126,11 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         GLES20.glUniform2fv(frontShader.getLocationOf("fCenter"), 1, fCenter, 0);
         GLES20.glUniform2fv(frontShader.getLocationOf("fLen"), 1, fLen, 0);
 
-        /*
         GLES20.glUseProgram(sideShader.getProgram());
         GLES20.glUniform2fv(sideShader.getLocationOf("fCenter"), 1, fCenter, 0);
         GLES20.glUniform2fv(sideShader.getLocationOf("fLen"), 1, fLen, 0);
         GLES20.glUniform2fv(sideShader.getLocationOf("rCenter"), 1, rCenter, 0);
         GLES20.glUniform2fv(sideShader.getLocationOf("rLen"), 1, rLen, 0);
-        */
 
         GLES20.glUseProgram(rearShader.getProgram());
         GLES20.glUniform2fv(rearShader.getLocationOf("rCenter"), 1, rCenter, 0);
