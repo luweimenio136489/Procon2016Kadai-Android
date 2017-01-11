@@ -4,12 +4,12 @@ import android.opengl.GLES20;
 import android.util.Log;
 
 /**
- * Model3DのモデルをGLにバインドし、バッファオブジェクトを保持する
+ * Model3DのモデルをGLにバインドし、バッファオブジェクトとインデックスの数を保持する
  */
 
 public class ModelBuffer {
     private static final String TAG = "ModelBuffer";
-    private int vbo, ibo;
+    private int vbo, ibo, indicesCount;
 
     ModelBuffer(Model3D model3D) {
         int[] buffers = new int[2];
@@ -28,6 +28,8 @@ public class ModelBuffer {
         GLES20.glBufferData(GLES20.GL_ELEMENT_ARRAY_BUFFER, Short.SIZE * model3D.indNum(), model3D.getIndices(), GLES20.GL_STATIC_DRAW);
         //checkGLError("Setting ibo");
         Log.d(TAG, "ibo: " + buffers[1] + ", size: " + model3D.indNum());
+
+        indicesCount = model3D.indNum();
     }
 
     public int getVbo() {
@@ -36,5 +38,9 @@ public class ModelBuffer {
 
     public int getIbo() {
         return ibo;
+    }
+
+    public int getIndicesCount() {
+        return indicesCount;
     }
 }

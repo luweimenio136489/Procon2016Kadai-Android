@@ -9,8 +9,8 @@ uniform mat4 mvpMat;                // Model, View, Projection 変換行列
 uniform mat4 stTransform;           // テクスチャからゴミを取り除く変換行列
 attribute vec3 position;            // 処理するxyz空間上の座標
 
-uniform vec2 fCenter, rCenter;      // 中心(uv)
-uniform vec2 fLen, rLen;            // 半径(？)(uv)
+uniform vec2 fCenter;
+uniform vec2 fLen;
 
 varying vec2 texCoord;              // フラグメントシェーダに渡すテクスチャ座標(uv)
 

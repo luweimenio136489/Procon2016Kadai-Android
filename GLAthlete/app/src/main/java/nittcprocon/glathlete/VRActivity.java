@@ -23,8 +23,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.microedition.khronos.egl.EGLConfig;
+
+import static java.lang.Math.PI;
 
 /**
  * Google VR SDKを使って実際の描画を行う
@@ -37,12 +41,11 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
      * グローバル人材
      */
     private static final String TAG = "VRActivity";
-    private Model3D sphereModel;
     private static final float CAMERA_Z = 0.01f, Z_NEAR = 0.1f, Z_FAR = 100.0f; // ？
-    private float[] modelMat, viewMat, camera, stTransform;   // 変換行列
+    private float[] modelMat, viewMat, camera;   // 変換行列
     private int texture;
-    private ModelBuffer sphereBuffer;
-    private ShaderProgram sphereShader;
+    private ModelBuffer frontBuffer, sideBuffer, rearBuffer;
+    private ShaderProgram frontShader, sideShader, rearShader;
     private String uri;                                       // RTSPストリームのURI
     private SurfaceTexture surfaceTexture;
     private MediaPlayer mediaPlayer;
@@ -92,7 +95,6 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         camera = new float[16];
         modelMat = new float[16];
         viewMat = new float[16];
-        stTransform = new float[16];
 
         Intent intent = getIntent();
         uri = intent.getStringExtra("uri");
@@ -105,26 +107,52 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         GLES20.glClearColor(0.1f, 0.1f, 0.1f, 0.5f);
 
         /* モデルの生成 */
-        sphereModel = new SphereModelCreator().getSphereModel();
+        Model3D frontModel, sideModel, rearModel;
+        frontModel = new PartialSphereModelCreator(0.0f, (float)(0.4 * PI)).getPartialSphereModel();
+        sideModel = new PartialSphereModelCreator((float)(0.4 * PI), (float)(0.6 * PI)).getPartialSphereModel();
+        rearModel = new PartialSphereModelCreator((float)(0.6 * PI), (float)(PI)).getPartialSphereModel();
+        checkGLError("Model Generation");
+        Log.d(TAG, "Generated models");
 
         /* シェーダーのコンパイルとリンク */
-        String sVShader = readRawTextFile(R.raw.vshader);
-        String sFShader = readRawTextFile(R.raw.fshader);
-        sphereShader = new ShaderProgram(sVShader, sFShader);
+        frontShader = new ShaderProgram(readRawTextFile(R.raw.v_front), readRawTextFile(R.raw.f_frontrear));
+        sideShader = new ShaderProgram(readRawTextFile(R.raw.v_side), readRawTextFile(R.raw.f_side));
+        rearShader = new ShaderProgram(readRawTextFile(R.raw.v_rear), readRawTextFile(R.raw.f_frontrear));
+        checkGLError("Shader Compilation");
+        Log.d(TAG, "Compiled GL shaders");
 
         /* 定数 */
-        GLES20.glUniform2fv(sphereShader.getLocationOf("fCenter"), 1, fCenter, 0);
-        GLES20.glUniform2fv(sphereShader.getLocationOf("rCenter"), 1, rCenter, 0);
-        GLES20.glUniform2fv(sphereShader.getLocationOf("fLen"), 1, fLen, 0);
-        GLES20.glUniform2fv(sphereShader.getLocationOf("rLen"), 1, rLen, 0);
+        GLES20.glUseProgram(frontShader.getProgram());
+        GLES20.glUniform2fv(frontShader.getLocationOf("fCenter"), 1, fCenter, 0);
+        GLES20.glUniform2fv(frontShader.getLocationOf("fLen"), 1, fLen, 0);
+
+        /*
+        GLES20.glUseProgram(sideShader.getProgram());
+        GLES20.glUniform2fv(sideShader.getLocationOf("fCenter"), 1, fCenter, 0);
+        GLES20.glUniform2fv(sideShader.getLocationOf("fLen"), 1, fLen, 0);
+        GLES20.glUniform2fv(sideShader.getLocationOf("rCenter"), 1, rCenter, 0);
+        GLES20.glUniform2fv(sideShader.getLocationOf("rLen"), 1, rLen, 0);
+        */
+
+        GLES20.glUseProgram(rearShader.getProgram());
+        GLES20.glUniform2fv(rearShader.getLocationOf("rCenter"), 1, rCenter, 0);
+        GLES20.glUniform2fv(rearShader.getLocationOf("rLen"), 1, rLen, 0);
+
+        checkGLError("Parameter Setting");
+        Log.d(TAG, "Set GL parameters");
 
         /* バッファオブジェクト */
-        sphereBuffer = new ModelBuffer(sphereModel);
+        frontBuffer = new ModelBuffer(frontModel);
+        sideBuffer = new ModelBuffer(sideModel);
+        rearBuffer = new ModelBuffer(rearModel);
+        checkGLError("Creating buffer objects");
+        Log.d(TAG, "Created buffer objects");
 
         texture = createTexture();
         surfaceTexture = new SurfaceTexture(texture);
 
         /* 変換行列の設定 */
+        // TODO: 回転機能
         Matrix.setIdentityM(modelMat, 0);
 
         startPlayback();
@@ -171,9 +199,14 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         Matrix.setLookAtM(camera, 0, 0.0f, 0.0f, CAMERA_Z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
 
         surfaceTexture.updateTexImage();
+
         /* テクスチャバッファの変換行列 */
+        float[] stTransform = new float[16];
         surfaceTexture.getTransformMatrix(stTransform);
-        GLES20.glUniformMatrix4fv(sphereShader.getLocationOf("stTransform"), 1, false, stTransform, 0);
+        for (ShaderProgram shader : new ShaderProgram[] {frontShader, sideShader, rearShader}) {
+            GLES20.glUseProgram(shader.getProgram());
+            GLES20.glUniformMatrix4fv(shader.getLocationOf("stTransform"), 1, false, stTransform, 0);
+        }
 
         checkGLError("onNewFrame");
     }
@@ -186,31 +219,43 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         Matrix.multiplyMM(viewMat, 0, eye.getEyeView(), 0, camera, 0);
         float[] perspective = eye.getPerspective(Z_NEAR, Z_FAR);
         float[] mvpMat = calcMVP(modelMat, viewMat, perspective);
-        int program = sphereShader.getProgram();
-        int vbo = sphereBuffer.getVbo();
-        int ibo = sphereBuffer.getIbo();
 
-        GLES20.glUseProgram(program);
+        Map<ShaderProgram, ModelBuffer> task = new HashMap<ShaderProgram, ModelBuffer>() {
+            {
+                put(frontShader, frontBuffer);
+                put(sideShader, sideBuffer);
+                put(rearShader, rearBuffer);
+            }
+        };
 
-        GLES20.glUniformMatrix4fv(sphereShader.getLocationOf("mvpMat"), 1, false, mvpMat, 0);
+        for (Map.Entry<ShaderProgram, ModelBuffer> t : task.entrySet()) {
+            ShaderProgram shader = t.getKey();
+            ModelBuffer buffer = t.getValue();
+            int vbo = buffer.getVbo();
+            int ibo = buffer.getIbo();
 
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
-        GLES20.glEnableVertexAttribArray(vbo);
-        GLES20.glVertexAttribPointer(sphereShader.getLocationOf("position"), 3, GLES20.GL_FLOAT, false, 0, 0);
+            GLES20.glUseProgram(shader.getProgram());
 
-        GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, ibo);
+            GLES20.glUniformMatrix4fv(shader.getLocationOf("mvpMat"), 1, false, mvpMat, 0);
 
-        GLES20.glDrawElements(GLES20.GL_TRIANGLES, sphereModel.indNum(), GLES20.GL_UNSIGNED_SHORT, 0);
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
+            GLES20.glEnableVertexAttribArray(vbo);
+            GLES20.glVertexAttribPointer(shader.getLocationOf("position"), 3, GLES20.GL_FLOAT, false, 0, 0);
 
-        checkGLError("Drawing sphere");
+            GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, ibo);
 
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, texture);
-        GLES20.glUniform1i(sphereShader.getLocationOf("texture"), 0);
+            GLES20.glDrawElements(GLES20.GL_TRIANGLES, buffer.getIndicesCount(), GLES20.GL_UNSIGNED_SHORT, 0);
 
-        // unbind
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
-        GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
+            checkGLError("Drawing sphere");
+
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+            GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, texture);
+            GLES20.glUniform1i(shader.getLocationOf("texture"), 0);
+
+            // unbind
+            //GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+            //GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
+        }
         checkGLError("onDrawEye");
     }
 
