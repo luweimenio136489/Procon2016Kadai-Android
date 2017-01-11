@@ -23,14 +23,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 import javax.microedition.khronos.egl.EGLConfig;
-
-import static nittcprocon.glathlete.ShaderProgram.Parameter.Qualifier.Attribute;
-import static nittcprocon.glathlete.ShaderProgram.Parameter.Qualifier.Uniform;
 
 /**
  * Google VR SDKを使って実際の描画を行う
@@ -88,22 +82,6 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         setGvrView(gvrView);
     }
 
-    /* なんだこれは！！！！！ */
-    private void prepareSphereShader() {
-        Set<ShaderProgram.Parameter> sphereShaderParams = new HashSet<>();
-        Collections.addAll(sphereShaderParams,
-                new ShaderProgram.Parameter(Attribute, "position"),
-                new ShaderProgram.Parameter(Uniform, "mvpMat"),
-                new ShaderProgram.Parameter(Uniform, "stTransform"),
-                new ShaderProgram.Parameter(Uniform, "fLen"),
-                new ShaderProgram.Parameter(Uniform, "rLen"),
-                new ShaderProgram.Parameter(Uniform, "fCenter"),
-                new ShaderProgram.Parameter(Uniform, "rCenter"),
-                new ShaderProgram.Parameter(Uniform, "texture")
-        );
-        sphereShader.setParamInfo(sphereShaderParams);
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -129,12 +107,9 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         sphereModel = new SphereModelCreator().getSphereModel();
 
         /* シェーダーのコンパイルとリンク */
-        //program = createProgram(R.raw.vshader, R.raw.fshader);
         String sVShader = readRawTextFile(R.raw.vshader);
         String sFShader = readRawTextFile(R.raw.fshader);
         sphereShader = new ShaderProgram(sVShader, sFShader);
-        prepareSphereShader();
-        int program = sphereShader.getProgram();
 
         /* 定数 */
         GLES20.glUniform2fv(sphereShader.getLocationOf("fCenter"), 1, fCenter, 0);

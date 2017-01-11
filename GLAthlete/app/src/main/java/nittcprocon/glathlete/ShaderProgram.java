@@ -5,28 +5,33 @@ import android.util.Log;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
- * GLのシェーダーをコンパイルし、ハンドルを保持する
+ * GLのシェーダーをコンパイルし、パラメータの情報を保持する
+ * TODO: 実行時エラーチェック
  */
 
 public class ShaderProgram {
     private static final String TAG = "ShaderProgram";
     private int program;
-    private Map<String, Integer> parameters = new HashMap<>();
+    private Map<String, ParamInfo> parameters = new HashMap<>();
 
-    public static class Parameter {
+    // 結局locationしか使わない
+    public static class ParamInfo {
         enum Qualifier {
             Attribute,
             Uniform
         }
         public Qualifier qualifier;
-        public String name;
+        public int size;
+        public int type;
+        public int location;
 
-        Parameter(Qualifier qualifier_, String name_) {
-            qualifier = qualifier_;
-            name = name_;
+        ParamInfo(Qualifier qualifier, int size, int type, int location) {
+            this.qualifier = qualifier;
+            this.size = size;
+            this.type = type;
+            this.location = location;
         }
     }
 
@@ -41,6 +46,32 @@ public class ShaderProgram {
         GLES20.glUseProgram(program);
 
         //checkGLError("createProgram");
+
+        // パラメータの個数を取得
+        int[] attribCount = new int[1];
+        int[] uniformCount = new int[1];
+        GLES20.glGetProgramiv(program, GLES20.GL_ACTIVE_ATTRIBUTES, attribCount, 0);
+        GLES20.glGetProgramiv(program, GLES20.GL_ACTIVE_UNIFORMS, uniformCount, 0);
+        Log.d(TAG, "We have " + attribCount[0] + " attributes and " + uniformCount[0] + " uniforms");
+
+        // パラメータの情報を取得
+        // indexとlocationは多くの場合に等しい？
+        for (int i = 0; i < attribCount[0]; i++) {
+            int[] size = new int[1];
+            int[] type = new int[1];
+            String attribName = GLES20.glGetActiveAttrib(program, i, size, 0, type, 0);
+            int location = GLES20.glGetAttribLocation(program, attribName);
+            parameters.put(attribName, new ParamInfo(ParamInfo.Qualifier.Attribute, size[0], type[0], location));
+            Log.d(TAG, "Attribute " + attribName + ": size " + size[0] + ", type " + type[0] + ", location " + location);
+        }
+        for (int i = 0; i < uniformCount[0]; i++) {
+            int[] size = new int[1];
+            int[] type = new int[1];
+            String uniformName = GLES20.glGetActiveUniform(program, i, size, 0, type, 0);
+            int location = GLES20.glGetUniformLocation(program, uniformName);
+            parameters.put(uniformName, new ParamInfo(ParamInfo.Qualifier.Uniform, size[0], type[0], location));
+            Log.d(TAG, "Uniform " + uniformName + ": size " + size[0] + ", type " + type[0] + ", location " + location);
+        }
     }
 
     public int getProgram() {
@@ -48,24 +79,7 @@ public class ShaderProgram {
     }
 
     public int getLocationOf(String name) {
-        return parameters.get(name);
-    }
-
-    public void setParamInfo(Set<Parameter> paramSet) {
-        for (Parameter p : paramSet) {
-            parameters.put(p.name, getParamLocation(p));
-        }
-    }
-
-    private int getParamLocation(Parameter parameter) {
-        switch (parameter.qualifier) {
-            case Attribute:
-                return GLES20.glGetAttribLocation(program, parameter.name);
-            case Uniform:
-                return  GLES20.glGetUniformLocation(program, parameter.name);
-            default:
-                throw new RuntimeException("This can't happen");
-        }
+        return parameters.get(name).location;
     }
 
     private int loadGLShader(int type, String code) {
