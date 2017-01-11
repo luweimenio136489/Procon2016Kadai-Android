@@ -79,6 +79,9 @@ public class ShaderProgram {
     }
 
     public int getLocationOf(String name) {
+        if (!parameters.containsKey(name)) {
+            throw new RuntimeException("ShaderProgram::getLocationOf: parameter " + name + " not found");
+        }
         return parameters.get(name).location;
     }
 
