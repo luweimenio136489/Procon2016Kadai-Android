@@ -1,6 +1,7 @@
 package nittcprocon.glathlete;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.SurfaceTexture;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -9,6 +10,7 @@ import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Surface;
 
@@ -42,49 +44,14 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
      */
     private static final String TAG = "VRActivity";
     private static final float CAMERA_Z = 0.01f, Z_NEAR = 0.1f, Z_FAR = 100.0f; // ？
-    private float[] modelMat, viewMat, camera;   // 変換行列
+    private float[] modelMat, viewMat, camera;      // 変換行列
+    private float[] fLen, rLen, fCenter, rCenter;   // シェーダーに渡すマッピング定数
     private int texture;
     private ModelBuffer frontBuffer, sideBuffer, rearBuffer;
     private ShaderProgram frontShader, sideShader, rearShader;
-    private String uri;                                       // RTSPストリームのURI
+    private String uri;
     private SurfaceTexture surfaceTexture;
     private MediaPlayer mediaPlayer;
-
-    /* とりあえず */
-    private float[] fLen = {(float)(0.25 * 0.9), (float)(0.4444 * 0.9)};
-    private float[] rLen = {(float)(0.25 * 0.9), (float)(0.4444 * 0.9)};
-    private float[] fCenter = {(float)0.25, (float)0.4444};
-    private float[] rCenter = {(float)0.75, (float)0.4444};
-
-    /*
-     * 初期化
-     */
-
-    public void initializeGvrView() {
-        setContentView(R.layout.activity_vr);
-
-        GvrView gvrView = (GvrView) findViewById(R.id.gvr_view);
-        gvrView.setEGLConfigChooser(8, 8, 8, 8, 16, 8);
-
-        gvrView.setRenderer(this);
-        gvrView.setTransitionViewEnabled(true);
-        gvrView.setOnCardboardBackButtonListener(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        onBackPressed();
-                    }
-                }
-        );
-
-        if (gvrView.setAsyncReprojectionEnabled(true)) {
-            // Async reprojection decouples the app framerate from the display framerate,
-            // allowing immersive interaction even at the throttled clockrates set by
-            // sustained performance mode.
-            AndroidCompat.setSustainedPerformanceMode(this, true);
-        }
-        setGvrView(gvrView);
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,6 +66,9 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         Intent intent = getIntent();
         uri = intent.getStringExtra("uri");
         Log.d(TAG, "URI: " + uri);
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        loadSharedPreferences(sharedPreferences);
     }
 
     @Override
@@ -156,6 +126,24 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         startPlayback();
     }
 
+    private void loadSharedPreferences(SharedPreferences p) {
+        float fCenter_u = p.getFloat("front_center_u", 0.25f);
+        float fCenter_v = p.getFloat("front_center_v", 0.4444f);
+        fCenter = new float[] {fCenter_u, fCenter_v};
+
+        float rCenter_u = p.getFloat("rear_center_u", 0.75f);
+        float rCenter_v = p.getFloat("rear_center_v", 0.4444f);
+        rCenter = new float[] {rCenter_u, rCenter_v};
+
+        float fLen_u = p.getFloat("front_length_u", (float)(0.25 * 0.9));
+        float fLen_v = p.getFloat("front_length_v", (float)(0.4444 * 0.9));
+        fLen = new float[] {fLen_u, fLen_v};
+
+        float rLen_u = p.getFloat("rear_length_u", (float)(0.25 * 0.9));
+        float rLen_v = p.getFloat("rear_length_v", (float)(0.4444 * 0.9));
+        rLen = new float[] {rLen_u, rLen_v};
+    }
+
     public void startPlayback() {
         Surface surface = new Surface(surfaceTexture);
         try {
@@ -183,6 +171,32 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         } catch(Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void initializeGvrView() {
+        setContentView(R.layout.activity_vr);
+
+        GvrView gvrView = (GvrView) findViewById(R.id.gvr_view);
+        gvrView.setEGLConfigChooser(8, 8, 8, 8, 16, 8);
+
+        gvrView.setRenderer(this);
+        gvrView.setTransitionViewEnabled(true);
+        gvrView.setOnCardboardBackButtonListener(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        onBackPressed();
+                    }
+                }
+        );
+
+        if (gvrView.setAsyncReprojectionEnabled(true)) {
+            // Async reprojection decouples the app framerate from the display framerate,
+            // allowing immersive interaction even at the throttled clockrates set by
+            // sustained performance mode.
+            AndroidCompat.setSustainedPerformanceMode(this, true);
+        }
+        setGvrView(gvrView);
     }
 
     /*
