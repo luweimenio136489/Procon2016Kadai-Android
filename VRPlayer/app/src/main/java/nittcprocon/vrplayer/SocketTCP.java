@@ -16,9 +16,10 @@ import java.net.SocketException;
 
 public class SocketTCP {
     private DatagramSocket receiveSocket;
-    private String message;
+    private String message,hoge;
     private int port;
     private Socket mSocket;
+    private BufferedReader in;
 
     private ServerSocket mServerSocket;
 
@@ -31,7 +32,6 @@ public class SocketTCP {
             public void run() {
                 // portを監視するTCPソケットを生成
                 // DatagramSocket receiveSocket = null;
-                BufferedReader in = null;
                 try {
                     mServerSocket = new ServerSocket(port);
                     mSocket = mServerSocket.accept();
@@ -43,7 +43,7 @@ public class SocketTCP {
                 }
                 // 受信したデータをログへ出力
                 try {
-                    message = new String(in.readLine());
+                    if(in!=null) message = in.readLine();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
