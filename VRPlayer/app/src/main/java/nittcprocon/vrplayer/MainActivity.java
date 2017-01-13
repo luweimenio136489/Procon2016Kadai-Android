@@ -26,7 +26,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     private VrVideoView videoView;
-    public SocketUDP Listener = new SocketUDP();
+    public SocketTCP listener = new SocketTCP();
     public String receiveValue;
 
     @Override
@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
         mkdir("/sdcard/VRPlayer");
 
         //UDP通信開始
-        StartUDP();
+        StartTCP();
 
         videoView = (VrVideoView) findViewById(R.id.vr_video_view);
         videoView.setEventListener(new VideoEventListener());
@@ -97,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
         alertDlg.create().show();
     }
 
-    public void StartUDP() {
+    public void StartTCP() {
         //Portの数値を"strport"(string型)へ(""の場合は"12345"とする)
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         String strport = sharedPreferences.getString("Port", "12345");
@@ -107,14 +107,14 @@ public class MainActivity extends AppCompatActivity {
         final int port = Integer.parseInt(strport);
         Log.d("UDP", "port# " + port);
 
-        //SocketUDPへportを送りながら起動
+        //SocketTCPへportを送りながら起動
         (new Thread(new Runnable() {
             @Override
             public void run() {
 
                 while(true) {
 
-                    receiveValue = new String(Listener.getMessage(port));
+                    receiveValue = new String(listener.getMessage(port));
 
                     messagecase(receiveValue);
 
@@ -123,6 +123,7 @@ public class MainActivity extends AppCompatActivity {
             }
         })).start();
     }
+
 
     public void messagecase(String message) {
 
