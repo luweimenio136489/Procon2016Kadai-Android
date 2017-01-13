@@ -26,7 +26,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     private VrVideoView videoView;
-    public SocketTCP listener = new SocketTCP();
+    public SocketUDP listener = new SocketUDP();
     public String receiveValue;
 
     @Override
