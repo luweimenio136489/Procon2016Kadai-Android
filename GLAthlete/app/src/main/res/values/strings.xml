@@ -4,6 +4,17 @@
     <string name="adjustment">調整</string>
     <string name="adjust_mapping">マッピング定数設定</string>
     <string name="adjust_mapping_visual">ビジュアル設定</string>
+    <string name="adjust_mapping_manual">手動設定</string>
+    <string name="rotate_vertically">垂直方向に回転</string>
+    <string name="rotate_horizontally">水平方向に回転</string>
+    <string name="front_center_u">前面中心u</string>
+    <string name="front_center_v">前面中心v</string>
+    <string name="rear_center_u">背面中心u</string>
+    <string name="rear_center_v">背面中心v</string>
+    <string name="front_length_u">前面半径u</string>
+    <string name="front_length_v">前面半径v</string>
+    <string name="rear_length_u">背面半径u</string>
+    <string name="rear_length_v">背面半径v</string>
     <string name="debug">デバッグ</string>
     <string name="debug_mode">デバッグモード</string>
     <string name="start_with_local_media">内部メディアを再生</string>

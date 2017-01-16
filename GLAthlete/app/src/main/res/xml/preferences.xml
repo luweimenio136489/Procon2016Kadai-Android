@@ -1,17 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res/nittcprocon.glathlete">
     <PreferenceCategory
         android:title="@string/adjust_mapping"
         android:key="pref_key_adjustment">
         <Preference android:title="@string/adjust_mapping_visual">
             <intent android:action="android.intent.action.VIEW"
                     android:targetPackage="nittcprocon.glathlete"
-                    android:targetClass="nittcprocon.glathlete.VisualAdjustmentActivity"/>
+                    android:targetClass="nittcprocon.glathlete.VisualAdjustmentActivity" />
         </Preference>
+        <PreferenceScreen android:title="@string/adjust_mapping_manual">
+            <nittcprocon.glathlete.FloatPreference
+                android:key="front_center_u"
+                android:title="@string/front_center_u"
+                android:defaultValue="0.25f"
+                custom:minValue="0.0"
+                custom:maxValue="0.5" />
+            <nittcprocon.glathlete.FloatPreference
+                android:key="front_center_v"
+                android:title="@string/front_center_v"
+                android:defaultValue="0.4444f"
+                custom:minValue="0.0"
+                custom:maxValue="1.0" />
+            <nittcprocon.glathlete.FloatPreference
+                android:key="rear_center_u"
+                android:title="@string/rear_center_u"
+                android:defaultValue="0.75f"
+                custom:minValue="0.5"
+                custom:maxValue="1.0" />
+            <nittcprocon.glathlete.FloatPreference
+                android:key="rear_center_v"
+                android:title="@string/rear_center_v"
+                android:defaultValue="0.4444f"
+                custom:minValue="0.0"
+                custom:maxValue="1.0" />
+            <nittcprocon.glathlete.FloatPreference
+                android:key="front_length_u"
+                android:title="@string/front_length_u"
+                android:defaultValue="0.225f"
+                custom:minValue="0.0"
+                custom:maxValue="0.5" />
+            <nittcprocon.glathlete.FloatPreference
+                android:key="front_length_v"
+                android:title="@string/front_length_v"
+                android:defaultValue="0.4f"
+                custom:minValue="0.0"
+                custom:maxValue="1.0" />
+            <nittcprocon.glathlete.FloatPreference
+                android:key="rear_length_u"
+                android:title="@string/rear_length_u"
+                android:defaultValue="0.225f"
+                custom:minValue="0.0"
+                custom:maxValue="0.5" />
+            <nittcprocon.glathlete.FloatPreference
+                android:key="rear_length_v"
+                android:title="@string/rear_length_v"
+                android:defaultValue="0.4f"
+                custom:minValue="0.0"
+                custom:maxValue="1.0" />
+        </PreferenceScreen>
+        <CheckBoxPreference
+            android:key="rotate_vertically"
+            android:title="@string/rotate_vertically"
+            android:defaultValue="false" />
+        <CheckBoxPreference
+            android:key="rotate_horizontally"
+            android:title="@string/rotate_horizontally"
+            android:defaultValue="false" />
     </PreferenceCategory>
-    <PreferenceCategory
-        android:title="@string/debug"
-        android:key="pref_key_debug">
+    <PreferenceCategory android:title="@string/debug">
         <Preference android:title="@string/debug_mode">
             <intent android:action="android.intent.action.VIEW"
                     android:targetPackage="nittcprocon.glathlete"

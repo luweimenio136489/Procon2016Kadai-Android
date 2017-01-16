@@ -3,6 +3,7 @@ package nittcprocon.glathlete;
 import android.content.Intent;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.format.Formatter;
@@ -30,6 +31,10 @@ public class MenuActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu);
+
+        // 初回起動時のみデフォルトの設定値を端末に保存する
+        // アプリのエントリポイントにはこれを書いておくこと
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
         uriEditText = (EditText) findViewById(R.id.uriEditText);
         startButton = (Button) findViewById(R.id.startButton);
@@ -76,5 +81,4 @@ public class MenuActivity extends AppCompatActivity {
         WifiManager wm = (WifiManager) getSystemService(WIFI_SERVICE);
         return Formatter.formatIpAddress(wm.getConnectionInfo().getIpAddress());
     }
-
 }
