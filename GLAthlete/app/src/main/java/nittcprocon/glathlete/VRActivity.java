@@ -54,6 +54,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
     private SurfaceTexture surfaceTexture;
     private MediaPlayer mediaPlayer;
     private GvrView gvrView;
+    private SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,8 +70,8 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
         uri = intent.getStringExtra("uri");
         Log.d(TAG, "URI: " + uri);
 
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        loadSharedPreferences(sharedPreferences);
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        loadSharedPreferences();
     }
 
     // 助けて
@@ -155,6 +156,11 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
             case KeyEvent.KEYCODE_K: // down
                 rLen[1] = Math.max(0.0f, rLen[1] - 0.01f);
                 Log.d(TAG, "rLen.v -> " + rLen[1]);
+                break;
+
+            case KeyEvent.KEYCODE_C:
+                setSharedPreferences();
+                Log.d(TAG, "設定を保存");
                 break;
 
             case KeyEvent.KEYCODE_Z:
@@ -245,22 +251,36 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
         Log.d(TAG, "Set GL parameters");
     }
 
-    private void loadSharedPreferences(SharedPreferences p) {
-        float fCenter_u = p.getFloat("front_center_u", 0.25f);
-        float fCenter_v = p.getFloat("front_center_v", 0.4444f);
+    private void loadSharedPreferences() {
+        float fCenter_u = sharedPreferences.getFloat("front_center_u", 0.25f);
+        float fCenter_v = sharedPreferences.getFloat("front_center_v", 0.4444f);
         fCenter = new float[] {fCenter_u, fCenter_v};
 
-        float rCenter_u = p.getFloat("rear_center_u", 0.75f);
-        float rCenter_v = p.getFloat("rear_center_v", 0.4444f);
+        float rCenter_u = sharedPreferences.getFloat("rear_center_u", 0.75f);
+        float rCenter_v = sharedPreferences.getFloat("rear_center_v", 0.4444f);
         rCenter = new float[] {rCenter_u, rCenter_v};
 
-        float fLen_u = p.getFloat("front_length_u", (float)(0.25 * 0.9));
-        float fLen_v = p.getFloat("front_length_v", (float)(0.4444 * 0.9));
+        float fLen_u = sharedPreferences.getFloat("front_length_u", (float)(0.25 * 0.9));
+        float fLen_v = sharedPreferences.getFloat("front_length_v", (float)(0.4444 * 0.9));
         fLen = new float[] {fLen_u, fLen_v};
 
-        float rLen_u = p.getFloat("rear_length_u", (float)(0.25 * 0.9));
-        float rLen_v = p.getFloat("rear_length_v", (float)(0.4444 * 0.9));
+        float rLen_u = sharedPreferences.getFloat("rear_length_u", (float)(0.25 * 0.9));
+        float rLen_v = sharedPreferences.getFloat("rear_length_v", (float)(0.4444 * 0.9));
         rLen = new float[] {rLen_u, rLen_v};
+    }
+
+    private void setSharedPreferences() {
+        Log.d(TAG, "setSharedPreferences");
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putFloat("front_center_u", fCenter[0]);
+        editor.putFloat("front_center_v", fCenter[1]);
+        editor.putFloat("rear_center_u", rCenter[0]);
+        editor.putFloat("rear_center_v", rCenter[1]);
+        editor.putFloat("front_length_u", fLen[0]);
+        editor.putFloat("front_length_v", fLen[1]);
+        editor.putFloat("rear_length_u", rLen[0]);
+        editor.putFloat("rear_length_v", rLen[1]);
+        editor.apply();
     }
 
     public void startPlayback() {

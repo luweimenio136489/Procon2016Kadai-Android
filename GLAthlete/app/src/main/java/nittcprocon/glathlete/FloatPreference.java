@@ -63,6 +63,8 @@ public class FloatPreference extends DialogPreference implements SeekBar.OnSeekB
         seekBar.setOnSeekBarChangeListener(this);
         seekBar.setMax(SEEKBAR_MAX);
 
+        value = sharedPreferences.getFloat(this.getKey(), 0.0f); // TODO: use default value
+
         updateEditText();
         updateSeekBar();
     }
@@ -98,6 +100,8 @@ public class FloatPreference extends DialogPreference implements SeekBar.OnSeekB
     @Override
     protected void onSetInitialValue(boolean restoreValue, Object defaultValue) {
         if (restoreValue) {
+            value = sharedPreferences.getFloat(getKey(), 0.0f);
+            Log.d(TAG, "restore value " + value);
         } else {
             if (defaultValue != null) {
                 value = (float)defaultValue;
