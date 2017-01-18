@@ -5,11 +5,13 @@
     <PreferenceCategory
         android:title="@string/adjust_mapping"
         android:key="pref_key_adjustment">
+        <!--
         <Preference android:title="@string/adjust_mapping_visual">
             <intent android:action="android.intent.action.VIEW"
                     android:targetPackage="nittcprocon.glathlete"
                     android:targetClass="nittcprocon.glathlete.VisualAdjustmentActivity" />
         </Preference>
+        -->
         <PreferenceScreen android:title="@string/adjust_mapping_manual">
             <nittcprocon.glathlete.FloatPreference
                 android:key="front_center_u"
@@ -60,6 +62,7 @@
                 custom:minValue="0.0"
                 custom:maxValue="1.0" />
         </PreferenceScreen>
+        <!--
         <CheckBoxPreference
             android:key="rotate_vertically"
             android:title="@string/rotate_vertically"
@@ -68,6 +71,7 @@
             android:key="rotate_horizontally"
             android:title="@string/rotate_horizontally"
             android:defaultValue="false" />
+        -->
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/debug">
         <Preference android:title="@string/debug_mode">
