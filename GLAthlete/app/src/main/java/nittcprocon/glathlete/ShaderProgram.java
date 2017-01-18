@@ -78,6 +78,20 @@ public class ShaderProgram {
         return program;
     }
 
+    public void useProgram() {
+        Log.v(TAG, "useProgram: " + program);
+        GLES20.glUseProgram(program);
+    }
+
+    private String dump2fv(float[] fv) {
+        return "(" + fv[0] + ", " + fv[1] + ")";
+    }
+
+    public void uniform2fv(String name, int count, float[] floats, int offset) {
+        Log.v(TAG, "uniform2fv: " + name + " -> " + dump2fv(floats));
+        GLES20.glUniform2fv(getLocationOf(name), count, floats, offset);
+    }
+
     public int getLocationOf(String name) {
         if (!parameters.containsKey(name)) {
             throw new RuntimeException("ShaderProgram::getLocationOf: parameter " + name + " not found");

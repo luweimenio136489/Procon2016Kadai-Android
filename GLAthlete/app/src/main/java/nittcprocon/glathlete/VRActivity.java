@@ -212,25 +212,32 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
         startPlayback();
     }
 
+    private String dump2fv(float[] fv) {
+        return "(" + fv[0] + ", " + fv[1] + ")";
+    }
+
     private void setShaderParams() {
         if (!shadersReady) {
             Log.d(TAG, "setShaderParams called before shaders are ready");
             return;
         }
+        Log.d(TAG, "setShaderParams: setting ");
+        Log.d(TAG, "fCenter: " + dump2fv(fCenter) + ", rCenter: " + dump2fv(rCenter));
+        Log.d(TAG, "fLen: " + dump2fv(fLen) + ", rLen: " + dump2fv(rLen));
 
-        GLES20.glUseProgram(frontShader.getProgram());
-        GLES20.glUniform2fv(frontShader.getLocationOf("fCenter"), 1, fCenter, 0);
-        GLES20.glUniform2fv(frontShader.getLocationOf("fLen"), 1, fLen, 0);
+        frontShader.useProgram();
+        frontShader.uniform2fv("fCenter", 1, fCenter, 0);
+        frontShader.uniform2fv("fLen", 1, fLen, 0);
 
-        GLES20.glUseProgram(sideShader.getProgram());
-        GLES20.glUniform2fv(sideShader.getLocationOf("fCenter"), 1, fCenter, 0);
-        GLES20.glUniform2fv(sideShader.getLocationOf("fLen"), 1, fLen, 0);
-        GLES20.glUniform2fv(sideShader.getLocationOf("rCenter"), 1, rCenter, 0);
-        GLES20.glUniform2fv(sideShader.getLocationOf("rLen"), 1, rLen, 0);
+        sideShader.useProgram();
+        sideShader.uniform2fv("fCenter", 1, fCenter, 0);
+        sideShader.uniform2fv("fLen", 1, fLen, 0);
+        sideShader.uniform2fv("rCenter", 1, rCenter, 0);
+        sideShader.uniform2fv("rLen", 1, rLen, 0);
 
-        GLES20.glUseProgram(rearShader.getProgram());
-        GLES20.glUniform2fv(rearShader.getLocationOf("rCenter"), 1, rCenter, 0);
-        GLES20.glUniform2fv(rearShader.getLocationOf("rLen"), 1, rLen, 0);
+        rearShader.useProgram();
+        rearShader.uniform2fv("rCenter", 1, rCenter, 0);
+        rearShader.uniform2fv("rLen", 1, rLen, 0);
 
         checkGLError("Parameter Setting");
         Log.d(TAG, "Set GL parameters");
