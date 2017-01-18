@@ -24,7 +24,7 @@ public class SocketUDP {
                 // portを監視するUDPソケットを生成
                 // DatagramSocket receiveSocket = null;
                 try {
-                    receiveSocket = new DatagramSocket(port);
+                    if(receiveSocket==null) receiveSocket = new DatagramSocket(port);
                 } catch (SocketException e) {
                     e.printStackTrace();
                 }

@@ -33,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
     private VrVideoView videoView;
     public SocketUDP Listener = new SocketUDP();
     public String receiveValue;
+    public boolean isLoad=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -146,8 +147,6 @@ public class MainActivity extends AppCompatActivity {
 
     public void messagecase(String message) {
 
-        Log.d("UDP", "messagecase :  " + message);
-
         //改行コード削除
         message = message.replaceAll("\n","");
         message = message.replaceAll("\r","");
@@ -155,17 +154,19 @@ public class MainActivity extends AppCompatActivity {
         //正規表現(loadするファイルの読み取りのため)
         Pattern pattern = Pattern.compile("(load: +)(.*)");
         Matcher matcher = pattern.matcher(message);
-
         if(matcher.find()) {
-
-            Log.d("UDP", "loadname: " + matcher.group(2));
-            view(matcher.group(2));
+            if(!isLoad) {
+                Log.d("UDP", "loadname: " + matcher.group(2));
+                view(matcher.group(2));
+                isLoad=true;
+            }
 
         } else {
             //switch文
             switch (message) {
                 case "start":
                     start();
+                    isLoad=false;
                     break;
 
                 case "stop":
@@ -296,6 +297,7 @@ public class MainActivity extends AppCompatActivity {
         public void onCompletion() {
             // 動画再生が完了
             super.onCompletion();
+
         }
 
     }
