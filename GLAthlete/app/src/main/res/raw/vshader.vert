@@ -15,7 +15,7 @@ uniform vec2 fLen, rLen;            // 半径(？)(uv)
 varying vec2 texCoord;              // フラグメントシェーダに渡すテクスチャ座標(uv)
 
 // External_OESのゴミを取り除く変換行列を適用する
-vec2 apply_transform(float u, float v)
+vec2 apply_transform(in float u, in float v)
 {
     return (stTransform * vec4(u, v, 0, 1)).xy;
 }
