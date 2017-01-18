@@ -48,9 +48,8 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
     private float[] modelMat, viewMat, camera;      // 変換行列
     private float[] fLen, rLen, fCenter, rCenter;   // シェーダーに渡すマッピング定数
     private int texture;
-    private boolean shadersBusy;
-    private ModelBuffer frontBuffer, sideBuffer, rearBuffer;
-    private ShaderProgram frontShader, sideShader, rearShader;
+    private ModelBuffer frontBuffer, frontSideBuffer, rearSideBuffer, rearBuffer;
+    private ShaderProgram frontShader, frontSideShader, rearSideShader, rearShader;
     private String uri;
     private SurfaceTexture surfaceTexture;
     private MediaPlayer mediaPlayer;
@@ -186,24 +185,22 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
         GLES20.glClearColor(0.1f, 0.1f, 0.1f, 0.5f);
 
         /* モデルの生成 */
-        Model3D frontModel, sideModel, rearModel;
-        frontModel = new PartialSphereModelCreator(0.0f, (float)(0.4 * PI)).getPartialSphereModel();
-        sideModel = new PartialSphereModelCreator((float)(0.4 * PI), (float)(0.6 * PI)).getPartialSphereModel();
-        rearModel = new PartialSphereModelCreator((float)(0.6 * PI), (float)(PI)).getPartialSphereModel();
+        final float fAngle = (float) (0.4 * PI), rAngle = (float) (0.6 * PI);
+        Model3D frontModel, frontSideModel, rearSideModel, rearModel;
+        frontModel = new PartialSphereModelCreator(0.0f, fAngle).getPartialSphereModel();
+        frontSideModel = new PartialSphereModelCreator(fAngle, (float)(0.5 * PI)).getPartialSphereModel();
+        rearSideModel = new PartialSphereModelCreator((float)(0.5 * PI), rAngle).getPartialSphereModel();
+        rearModel = new PartialSphereModelCreator(rAngle, (float)(PI)).getPartialSphereModel();
         checkGLError("Model Generation");
         Log.d(TAG, "Generated models");
 
-        /* シェーダーのコンパイルとリンク */
-        shadersBusy = true;
         compileShaders();
-
-        /* 定数 */
         setShaderParams();
-        shadersBusy = false;
 
         /* バッファオブジェクト */
         frontBuffer = new ModelBuffer(frontModel);
-        sideBuffer = new ModelBuffer(sideModel);
+        frontSideBuffer = new ModelBuffer(frontSideModel);
+        rearSideBuffer = new ModelBuffer(rearSideModel);
         rearBuffer = new ModelBuffer(rearModel);
         checkGLError("Creating buffer objects");
         Log.d(TAG, "Created buffer objects");
@@ -220,7 +217,8 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
 
     private void compileShaders() {
         frontShader = new ShaderProgram(readRawTextFile(R.raw.v_front), readRawTextFile(R.raw.f_frontrear));
-        sideShader = new ShaderProgram(readRawTextFile(R.raw.v_side), readRawTextFile(R.raw.f_side));
+        frontSideShader = new ShaderProgram(readRawTextFile(R.raw.v_frontside), readRawTextFile(R.raw.f_frontside));
+        rearSideShader = new ShaderProgram(readRawTextFile(R.raw.v_rearside), readRawTextFile(R.raw.f_rearside));
         rearShader = new ShaderProgram(readRawTextFile(R.raw.v_rear), readRawTextFile(R.raw.f_frontrear));
         checkGLError("Shader Compilation");
         Log.d(TAG, "Compiled GL shaders");
@@ -235,19 +233,13 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
         Log.d(TAG, "fCenter: " + dump2fv(fCenter) + ", rCenter: " + dump2fv(rCenter));
         Log.d(TAG, "fLen: " + dump2fv(fLen) + ", rLen: " + dump2fv(rLen));
 
-        frontShader.useProgram();
-        frontShader.uniform2fv("fCenter", 1, fCenter, 0);
-        frontShader.uniform2fv("fLen", 1, fLen, 0);
-
-        sideShader.useProgram();
-        sideShader.uniform2fv("fCenter", 1, fCenter, 0);
-        sideShader.uniform2fv("fLen", 1, fLen, 0);
-        sideShader.uniform2fv("rCenter", 1, rCenter, 0);
-        sideShader.uniform2fv("rLen", 1, rLen, 0);
-
-        rearShader.useProgram();
-        rearShader.uniform2fv("rCenter", 1, rCenter, 0);
-        rearShader.uniform2fv("rLen", 1, rLen, 0);
+        for (ShaderProgram shader : new ShaderProgram[] {frontShader, frontSideShader, rearSideShader, rearShader}) {
+            shader.useProgram();
+            shader.ifExistsUniform2fv("fCenter", 1, fCenter, 0);
+            shader.ifExistsUniform2fv("rCenter", 1, rCenter, 0);
+            shader.ifExistsUniform2fv("fLen", 1, fLen, 0);
+            shader.ifExistsUniform2fv("rLen", 1, rLen, 0);
+        }
 
         checkGLError("Parameter Setting");
         Log.d(TAG, "Set GL parameters");
@@ -343,19 +335,12 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
         float[] stTransform = new float[16];
         surfaceTexture.getTransformMatrix(stTransform);
 
-        if (shadersBusy) {
-            Log.d(TAG, "onNewFrame: skipped because shaders busy");
-            return;
-        }
-        shadersBusy = true;
-
-        for (ShaderProgram shader : new ShaderProgram[] {frontShader, sideShader, rearShader}) {
+        for (ShaderProgram shader : new ShaderProgram[] {frontShader, frontSideShader, rearSideShader, rearShader}) {
             GLES20.glUseProgram(shader.getProgram());
             GLES20.glUniformMatrix4fv(shader.getLocationOf("stTransform"), 1, false, stTransform, 0);
         }
 
         checkGLError("onNewFrame");
-        shadersBusy = false;
     }
 
     /* 与えられたEyeに対してフレームを描画する */
@@ -367,17 +352,11 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
         float[] perspective = eye.getPerspective(Z_NEAR, Z_FAR);
         float[] mvpMat = calcMVP(modelMat, viewMat, perspective);
 
-        if (shadersBusy) {
-            Log.d(TAG, "onDrawEye: skipped because shaders busy");
-            return;
-        }
-        shadersBusy = true;
-
-
         Map<ShaderProgram, ModelBuffer> task = new HashMap<ShaderProgram, ModelBuffer>() {
             {
                 put(frontShader, frontBuffer);
-                put(sideShader, sideBuffer);
+                put(frontSideShader, frontSideBuffer);
+                put(rearSideShader, rearSideBuffer);
                 put(rearShader, rearBuffer);
             }
         };
@@ -411,7 +390,6 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
             //GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
         }
         checkGLError("onDrawEye");
-        shadersBusy = false;
     }
 
     /*
