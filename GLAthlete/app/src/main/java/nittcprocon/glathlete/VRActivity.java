@@ -157,6 +157,13 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
                 Log.d(TAG, "rLen.v -> " + rLen[1]);
                 break;
 
+            case KeyEvent.KEYCODE_Z:
+                mediaPlayer.pause();
+                return true;
+            case KeyEvent.KEYCODE_X:
+                mediaPlayer.start();
+                return true;
+
             default:
                 return super.onKeyUp(keycode, event);
         }
