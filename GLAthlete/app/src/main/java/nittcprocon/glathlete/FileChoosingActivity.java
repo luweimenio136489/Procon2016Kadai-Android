@@ -21,7 +21,8 @@ public class FileChoosingActivity extends AppCompatActivity {
         setContentView(R.layout.activity_file_choosing);
 
         // Intent.ACTION_PICKは理不尽な挙動をする
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT, android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT, android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
+        intent.setType("video/*");
         startActivityForResult(intent, REQUEST_CODE);
     }
 
