@@ -11,21 +11,21 @@ import java.util.Map;
  * TODO: 実行時エラーチェック
  */
 
-public class ShaderProgram {
+class ShaderProgram {
     private static final String TAG = "ShaderProgram";
     private int program;
     private Map<String, ParamInfo> parameters = new HashMap<>();
 
     // 結局locationしか使わない
-    public static class ParamInfo {
+    private static class ParamInfo {
         enum Qualifier {
             Attribute,
             Uniform
         }
-        public Qualifier qualifier;
-        public int size;
-        public int type;
-        public int location;
+        Qualifier qualifier;
+        int size;
+        int type;
+        int location;
 
         ParamInfo(Qualifier qualifier, int size, int type, int location) {
             this.qualifier = qualifier;
@@ -81,6 +81,11 @@ public class ShaderProgram {
     public void useProgram() {
         Log.v(TAG, "useProgram: " + program);
         GLES20.glUseProgram(program);
+    }
+
+    public void deleteProgram() {
+        GLES20.glUseProgram(0);
+        GLES20.glDeleteProgram(program);
     }
 
     private String dump2fv(float[] fv) {

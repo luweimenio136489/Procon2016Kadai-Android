@@ -48,12 +48,13 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
     private float[] modelMat, viewMat, camera;      // 変換行列
     private float[] fLen, rLen, fCenter, rCenter;   // シェーダーに渡すマッピング定数
     private int texture;
-    private boolean shadersReady = false;
+    private boolean shadersBusy;
     private ModelBuffer frontBuffer, sideBuffer, rearBuffer;
     private ShaderProgram frontShader, sideShader, rearShader;
     private String uri;
     private SurfaceTexture surfaceTexture;
     private MediaPlayer mediaPlayer;
+    private GvrView gvrView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -167,7 +168,15 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
             default:
                 return super.onKeyUp(keycode, event);
         }
-        setShaderParams();
+
+        // GLのメソッドはGLのスレッドから呼ぶ必要がある
+        gvrView.queueEvent(new Runnable() {
+            @Override
+            public void run() {
+                setShaderParams();
+            }
+        });
+
         return true;
     }
 
@@ -185,15 +194,12 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
         Log.d(TAG, "Generated models");
 
         /* シェーダーのコンパイルとリンク */
-        frontShader = new ShaderProgram(readRawTextFile(R.raw.v_front), readRawTextFile(R.raw.f_frontrear));
-        sideShader = new ShaderProgram(readRawTextFile(R.raw.v_side), readRawTextFile(R.raw.f_side));
-        rearShader = new ShaderProgram(readRawTextFile(R.raw.v_rear), readRawTextFile(R.raw.f_frontrear));
-        checkGLError("Shader Compilation");
-        Log.d(TAG, "Compiled GL shaders");
-        shadersReady = true;
+        shadersBusy = true;
+        compileShaders();
 
         /* 定数 */
         setShaderParams();
+        shadersBusy = false;
 
         /* バッファオブジェクト */
         frontBuffer = new ModelBuffer(frontModel);
@@ -212,15 +218,19 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
         startPlayback();
     }
 
+    private void compileShaders() {
+        frontShader = new ShaderProgram(readRawTextFile(R.raw.v_front), readRawTextFile(R.raw.f_frontrear));
+        sideShader = new ShaderProgram(readRawTextFile(R.raw.v_side), readRawTextFile(R.raw.f_side));
+        rearShader = new ShaderProgram(readRawTextFile(R.raw.v_rear), readRawTextFile(R.raw.f_frontrear));
+        checkGLError("Shader Compilation");
+        Log.d(TAG, "Compiled GL shaders");
+    }
+
     private String dump2fv(float[] fv) {
         return "(" + fv[0] + ", " + fv[1] + ")";
     }
 
     private void setShaderParams() {
-        if (!shadersReady) {
-            Log.d(TAG, "setShaderParams called before shaders are ready");
-            return;
-        }
         Log.d(TAG, "setShaderParams: setting ");
         Log.d(TAG, "fCenter: " + dump2fv(fCenter) + ", rCenter: " + dump2fv(rCenter));
         Log.d(TAG, "fLen: " + dump2fv(fLen) + ", rLen: " + dump2fv(rLen));
@@ -293,7 +303,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
     public void initializeGvrView() {
         setContentView(R.layout.activity_vr);
 
-        GvrView gvrView = (GvrView) findViewById(R.id.gvr_view);
+        gvrView = (GvrView) findViewById(R.id.gvr_view);
         gvrView.setEGLConfigChooser(8, 8, 8, 8, 16, 8);
 
         gvrView.setRenderer(this);
@@ -332,12 +342,20 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
         /* テクスチャバッファの変換行列 */
         float[] stTransform = new float[16];
         surfaceTexture.getTransformMatrix(stTransform);
+
+        if (shadersBusy) {
+            Log.d(TAG, "onNewFrame: skipped because shaders busy");
+            return;
+        }
+        shadersBusy = true;
+
         for (ShaderProgram shader : new ShaderProgram[] {frontShader, sideShader, rearShader}) {
             GLES20.glUseProgram(shader.getProgram());
             GLES20.glUniformMatrix4fv(shader.getLocationOf("stTransform"), 1, false, stTransform, 0);
         }
 
         checkGLError("onNewFrame");
+        shadersBusy = false;
     }
 
     /* 与えられたEyeに対してフレームを描画する */
@@ -348,6 +366,13 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
         Matrix.multiplyMM(viewMat, 0, eye.getEyeView(), 0, camera, 0);
         float[] perspective = eye.getPerspective(Z_NEAR, Z_FAR);
         float[] mvpMat = calcMVP(modelMat, viewMat, perspective);
+
+        if (shadersBusy) {
+            Log.d(TAG, "onDrawEye: skipped because shaders busy");
+            return;
+        }
+        shadersBusy = true;
+
 
         Map<ShaderProgram, ModelBuffer> task = new HashMap<ShaderProgram, ModelBuffer>() {
             {
@@ -386,6 +411,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
             //GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
         }
         checkGLError("onDrawEye");
+        shadersBusy = false;
     }
 
     /*
