@@ -12,6 +12,7 @@ import android.opengl.Matrix;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Surface;
 
 import com.google.vr.sdk.base.AndroidCompat;
@@ -38,7 +39,7 @@ import static java.lang.Math.PI;
  * FIXME: テクスチャユニットをTEXTURE0しか使わない前提になってる
  */
 
-public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
+public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, KeyEvent.Callback {
     /*
      * グローバル人材
      */
@@ -47,6 +48,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
     private float[] modelMat, viewMat, camera;      // 変換行列
     private float[] fLen, rLen, fCenter, rCenter;   // シェーダーに渡すマッピング定数
     private int texture;
+    private boolean shadersReady = false;
     private ModelBuffer frontBuffer, sideBuffer, rearBuffer;
     private ShaderProgram frontShader, sideShader, rearShader;
     private String uri;
@@ -71,6 +73,97 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         loadSharedPreferences(sharedPreferences);
     }
 
+    // 助けて
+    @Override
+    public boolean onKeyUp(int keycode, KeyEvent event) {
+        switch (keycode) {
+            // fCenter
+            // fCenter.u
+            case KeyEvent.KEYCODE_Q: // up
+                fCenter[0] = Math.min(1.0f, fCenter[0] + 0.01f);
+                Log.d(TAG, "fCenter.u -> " + fCenter[0]);
+                break;
+            case KeyEvent.KEYCODE_A: // down
+                fCenter[0] = Math.max(0.0f, fCenter[0] - 0.01f);
+                Log.d(TAG, "fCenter.u -> " + fCenter[0]);
+                break;
+            // fCenter.v
+            case KeyEvent.KEYCODE_W: // up
+                fCenter[1] = Math.min(1.0f, fCenter[1] + 0.01f);
+                Log.d(TAG, "fCenter.v -> " + fCenter[1]);
+                break;
+            case KeyEvent.KEYCODE_S: // down
+                fCenter[1] = Math.max(0.0f, fCenter[1] - 0.01f);
+                Log.d(TAG, "fCenter.v -> " + fCenter[1]);
+                break;
+
+            // rCenter
+            // rCenter.u
+            case KeyEvent.KEYCODE_E: // up
+                rCenter[0] = Math.min(1.0f, rCenter[0] + 0.01f);
+                Log.d(TAG, "rCenter.u -> " + rCenter[0]);
+                break;
+            case KeyEvent.KEYCODE_D: // down
+                rCenter[0] = Math.max(0.0f, rCenter[0] - 0.01f);
+                Log.d(TAG, "rCenter.u -> " + rCenter[0]);
+                break;
+            // rCenter.v
+            case KeyEvent.KEYCODE_R: // up
+                rCenter[1] = Math.min(1.0f, rCenter[1] + 0.01f);
+                Log.d(TAG, "rCenter.v -> " + rCenter[1]);
+                break;
+            case KeyEvent.KEYCODE_F: // down
+                rCenter[1] = Math.max(0.0f, rCenter[1] - 0.01f);
+                Log.d(TAG, "rCenter.v -> " + rCenter[1]);
+                break;
+
+            // fLen
+            // fLen.u
+            case KeyEvent.KEYCODE_T: // up
+                fLen[0] = Math.min(1.0f, fLen[0] + 0.01f);
+                Log.d(TAG, "fLen.u -> " + fLen[0]);
+                break;
+            case KeyEvent.KEYCODE_G: // down
+                fLen[0] = Math.max(0.0f, fLen[0] - 0.01f);
+                Log.d(TAG, "fLen.u -> " + fLen[0]);
+                break;
+            // fLen.v
+            case KeyEvent.KEYCODE_Y: // up
+                fLen[1] = Math.min(1.0f, fLen[1] + 0.01f);
+                Log.d(TAG, "fLen.v -> " + fLen[1]);
+                break;
+            case KeyEvent.KEYCODE_H: // down
+                fLen[1] = Math.max(0.0f, fLen[1] - 0.01f);
+                Log.d(TAG, "fLen.v -> " + fLen[1]);
+                break;
+
+            // rLen
+            // rLen.u
+            case KeyEvent.KEYCODE_U: // up
+                rLen[0] = Math.min(1.0f, rLen[0] + 0.01f);
+                Log.d(TAG, "rLen.u -> " + rLen[0]);
+                break;
+            case KeyEvent.KEYCODE_J: // down
+                rLen[0] = Math.max(0.0f, rLen[0] - 0.01f);
+                Log.d(TAG, "rLen.u -> " + rLen[0]);
+                break;
+            // rLen.v
+            case KeyEvent.KEYCODE_I: // up
+                rLen[1] = Math.min(1.0f, rLen[1] + 0.01f);
+                Log.d(TAG, "rLen.v -> " + rLen[1]);
+                break;
+            case KeyEvent.KEYCODE_K: // down
+                rLen[1] = Math.max(0.0f, rLen[1] - 0.01f);
+                Log.d(TAG, "rLen.v -> " + rLen[1]);
+                break;
+
+            default:
+                return super.onKeyUp(keycode, event);
+        }
+        setShaderParams();
+        return true;
+    }
+
     @Override
     public void onSurfaceCreated(EGLConfig config) {
         Log.i(TAG, "onSurfaceCreated");
@@ -90,24 +183,10 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         rearShader = new ShaderProgram(readRawTextFile(R.raw.v_rear), readRawTextFile(R.raw.f_frontrear));
         checkGLError("Shader Compilation");
         Log.d(TAG, "Compiled GL shaders");
+        shadersReady = true;
 
         /* 定数 */
-        GLES20.glUseProgram(frontShader.getProgram());
-        GLES20.glUniform2fv(frontShader.getLocationOf("fCenter"), 1, fCenter, 0);
-        GLES20.glUniform2fv(frontShader.getLocationOf("fLen"), 1, fLen, 0);
-
-        GLES20.glUseProgram(sideShader.getProgram());
-        GLES20.glUniform2fv(sideShader.getLocationOf("fCenter"), 1, fCenter, 0);
-        GLES20.glUniform2fv(sideShader.getLocationOf("fLen"), 1, fLen, 0);
-        GLES20.glUniform2fv(sideShader.getLocationOf("rCenter"), 1, rCenter, 0);
-        GLES20.glUniform2fv(sideShader.getLocationOf("rLen"), 1, rLen, 0);
-
-        GLES20.glUseProgram(rearShader.getProgram());
-        GLES20.glUniform2fv(rearShader.getLocationOf("rCenter"), 1, rCenter, 0);
-        GLES20.glUniform2fv(rearShader.getLocationOf("rLen"), 1, rLen, 0);
-
-        checkGLError("Parameter Setting");
-        Log.d(TAG, "Set GL parameters");
+        setShaderParams();
 
         /* バッファオブジェクト */
         frontBuffer = new ModelBuffer(frontModel);
@@ -124,6 +203,30 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
         Matrix.setIdentityM(modelMat, 0);
 
         startPlayback();
+    }
+
+    private void setShaderParams() {
+        if (!shadersReady) {
+            Log.d(TAG, "setShaderParams called before shaders are ready");
+            return;
+        }
+
+        GLES20.glUseProgram(frontShader.getProgram());
+        GLES20.glUniform2fv(frontShader.getLocationOf("fCenter"), 1, fCenter, 0);
+        GLES20.glUniform2fv(frontShader.getLocationOf("fLen"), 1, fLen, 0);
+
+        GLES20.glUseProgram(sideShader.getProgram());
+        GLES20.glUniform2fv(sideShader.getLocationOf("fCenter"), 1, fCenter, 0);
+        GLES20.glUniform2fv(sideShader.getLocationOf("fLen"), 1, fLen, 0);
+        GLES20.glUniform2fv(sideShader.getLocationOf("rCenter"), 1, rCenter, 0);
+        GLES20.glUniform2fv(sideShader.getLocationOf("rLen"), 1, rLen, 0);
+
+        GLES20.glUseProgram(rearShader.getProgram());
+        GLES20.glUniform2fv(rearShader.getLocationOf("rCenter"), 1, rCenter, 0);
+        GLES20.glUniform2fv(rearShader.getLocationOf("rLen"), 1, rLen, 0);
+
+        checkGLError("Parameter Setting");
+        Log.d(TAG, "Set GL parameters");
     }
 
     private void loadSharedPreferences(SharedPreferences p) {
@@ -151,7 +254,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer {
             mediaPlayer = new MediaPlayer();
             mediaPlayer.setDataSource(getApplicationContext(), Uri.parse(uri));
             mediaPlayer.setSurface(surface);
-            mediaPlayer.setLooping(false);
+            mediaPlayer.setLooping(true);
 
             mediaPlayer.prepareAsync();
 
