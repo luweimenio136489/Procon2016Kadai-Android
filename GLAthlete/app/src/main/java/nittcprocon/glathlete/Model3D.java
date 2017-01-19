@@ -16,7 +16,7 @@ import static nittcprocon.glathlete.Types.*;
  * getXXX()というメソッドが軽量アクセサとは限らないので注意
  */
 
-public class Model3D {
+class Model3D {
     private static final String TAG = "Model3D";
     private FloatBuffer vertices;
     private ShortBuffer indices;
@@ -33,38 +33,34 @@ public class Model3D {
         isBufferFresh = false;
     }
 
-    public void addTri(Tri t) {
+    Model3D addTri(Tri t) {
         isBufferFresh = false;
         arrayVerticesList.addAll(t.asList());
-//        for (int i = verticesList.size() - 3; i < verticesList.size(); i++) {
-//            indicesList.add((short)i);
-//        }
+        return this;
     }
 
-    public void addQuad(Quad q) {
+    Model3D addQuad(Quad q) {
         isBufferFresh = false;
         addTri(new Tri(q.a, q.b, q.c));
         addTri(new Tri(q.c, q.d, q.a));
-//        for (short i : new short[] {0, 1, 2, 2, 3, 0}) {
-//            indicesList.add((short)(verticesList.size() - 4 + i));
-//        }
+        return this;
     }
 
-    public FloatBuffer getVertices() {
+    FloatBuffer getVertices() {
         if(!isBufferFresh)
             createBuffer();
 
         return vertices;
     }
 
-    public ShortBuffer getIndices() {
+    ShortBuffer getIndices() {
         if(!isBufferFresh)
             createBuffer();
 
         return indices;
     }
 
-    public void createBuffer() {
+    void createBuffer() {
         prepareIndices();
 
         Log.d(TAG, "createBuffer");
@@ -88,11 +84,11 @@ public class Model3D {
         return uniqueVerticesList.size();
     }
 
-    public int vertNum() {
+    int vertNum() {
         return uniqueVerticesList.size() * 3;
     }
 
-    public short indNum() {
+    short indNum() {
         return (short)indicesList.size();
     }
 
