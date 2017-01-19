@@ -13,6 +13,8 @@ android {
     buildToolsVersion '25.0.2'
     defaultConfig {
         applicationId "nittcprocon.glathlete"
+        // OpenGL ES 2.0 support: API Level 8
+        // Google VR SDK: API Level 19
         minSdkVersion 19
         targetSdkVersion 25
         versionCode 1
