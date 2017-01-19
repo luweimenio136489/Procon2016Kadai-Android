@@ -28,10 +28,7 @@ vec2 calcFTexCoord(void)
     float r = abs((PI / 2.0) + asin(abs(position.z))) / (PI / 2.0);
     float t;
 
-    if (position.x == 0.0)
-        t = 0.0;
-    else
-        t = atan(position.y, position.x);
+    t = atan(position.y, position.x);
 
     float a = r * cos(t), b = r * sin(t);
 
@@ -45,10 +42,7 @@ vec2 calcRTexCoord(void)
     float r = abs(acos(abs(position.z))) / (PI / 2.0);
     float t;
 
-    if (position.x == 0.0)
-        t = 0.0;
-    else
-        t = atan(position.y, position.x);
+    t = atan(position.y, position.x);
 
     float a = r * cos(t), b = r * sin(t);
 
