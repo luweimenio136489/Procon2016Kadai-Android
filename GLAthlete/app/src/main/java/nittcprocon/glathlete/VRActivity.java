@@ -40,9 +40,7 @@ import static java.lang.Math.PI;
  */
 
 public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, KeyEvent.Callback {
-    /*
-     * グローバル人材
-     */
+    //region グローバル人材
     private static final String TAG = "VRActivity";
     private static final float CAMERA_Z = 0.01f, Z_NEAR = 0.1f, Z_FAR = 100.0f; // ？
     private float[] modelMat, viewMat, camera;      // 変換行列
@@ -55,7 +53,8 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
     private MediaPlayer mediaPlayer;
     private GvrView gvrView;
     private SharedPreferences sharedPreferences;
-
+    //endregion
+    //region GvrActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -74,6 +73,135 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
         loadSharedPreferences();
     }
 
+    @Override
+    public void onSurfaceCreated(EGLConfig config) {
+        Log.i(TAG, "onSurfaceCreated");
+        GLES20.glClearColor(0.1f, 0.1f, 0.1f, 0.5f);
+
+        /* モデルの生成 */
+        final float fAngle = (float) (0.4 * PI), rAngle = (float) (0.6 * PI);
+        Model3D frontModel, frontSideModel, rearSideModel, rearModel;
+        frontModel = new PartialSphereModelCreator(0.0f, fAngle).getPartialSphereModel();
+        frontSideModel = new PartialSphereModelCreator(fAngle, (float)(0.5 * PI)).getPartialSphereModel();
+        rearSideModel = new PartialSphereModelCreator((float)(0.5 * PI), rAngle).getPartialSphereModel();
+        rearModel = new PartialSphereModelCreator(rAngle, (float)(PI)).getPartialSphereModel();
+        checkGLError("Model Generation");
+        Log.d(TAG, "Generated models");
+
+        compileShaders();
+        setShaderParams();
+
+        /* バッファオブジェクト */
+        frontBuffer = new ModelBuffer(frontModel);
+        frontSideBuffer = new ModelBuffer(frontSideModel);
+        rearSideBuffer = new ModelBuffer(rearSideModel);
+        rearBuffer = new ModelBuffer(rearModel);
+        checkGLError("Creating buffer objects");
+        Log.d(TAG, "Created buffer objects");
+
+        texture = createTexture();
+        surfaceTexture = new SurfaceTexture(texture);
+
+        /* 変換行列の設定 */
+        // TODO: 回転機能
+        Matrix.setIdentityM(modelMat, 0);
+
+        startPlayback();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        mediaPlayer.stop();
+    }
+    //endregion
+    //region GvrView.StereoRenderer
+    /* フレームの描画前にOpenGL ESの準備をする */
+    /* FIXME: なんか失敗してる？(glError 1282: GL_INVALID_OPERATION) */
+    @Override
+    public void onNewFrame(HeadTransform headTransform) {
+        // 出力先, オフセット, 視点のx, y, z, 視点の中心のx, y, z, 上向きベクトルのx, y, z
+        Matrix.setLookAtM(camera, 0, 0.0f, 0.0f, CAMERA_Z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+
+        surfaceTexture.updateTexImage();
+
+        /* テクスチャバッファの変換行列 */
+        float[] stTransform = new float[16];
+        surfaceTexture.getTransformMatrix(stTransform);
+
+        for (ShaderProgram shader : new ShaderProgram[] {frontShader, frontSideShader, rearSideShader, rearShader}) {
+            GLES20.glUseProgram(shader.getProgram());
+            GLES20.glUniformMatrix4fv(shader.getLocationOf("stTransform"), 1, false, stTransform, 0);
+        }
+
+        checkGLError("onNewFrame");
+    }
+
+    /* 与えられたEyeに対してフレームを描画する */
+    @Override
+    public void onDrawEye(Eye eye) {
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+
+        Matrix.multiplyMM(viewMat, 0, eye.getEyeView(), 0, camera, 0);
+        float[] perspective = eye.getPerspective(Z_NEAR, Z_FAR);
+        float[] mvpMat = calcMVP(modelMat, viewMat, perspective);
+
+        Map<ShaderProgram, ModelBuffer> task = new HashMap<ShaderProgram, ModelBuffer>() {
+            {
+                put(frontShader, frontBuffer);
+                put(frontSideShader, frontSideBuffer);
+                put(rearSideShader, rearSideBuffer);
+                put(rearShader, rearBuffer);
+            }
+        };
+
+        for (Map.Entry<ShaderProgram, ModelBuffer> t : task.entrySet()) {
+            ShaderProgram shader = t.getKey();
+            ModelBuffer buffer = t.getValue();
+            int vbo = buffer.getVbo();
+            int ibo = buffer.getIbo();
+
+            GLES20.glUseProgram(shader.getProgram());
+
+            GLES20.glUniformMatrix4fv(shader.getLocationOf("mvpMat"), 1, false, mvpMat, 0);
+
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
+            GLES20.glEnableVertexAttribArray(vbo);
+            GLES20.glVertexAttribPointer(shader.getLocationOf("position"), 3, GLES20.GL_FLOAT, false, 0, 0);
+
+            GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, ibo);
+
+            GLES20.glDrawElements(GLES20.GL_TRIANGLES, buffer.getIndicesCount(), GLES20.GL_UNSIGNED_SHORT, 0);
+
+            checkGLError("Drawing sphere");
+
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+            GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, texture);
+            GLES20.glUniform1i(shader.getLocationOf("texture"), 0);
+
+            // unbind
+            //GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+            //GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
+        }
+        checkGLError("onDrawEye");
+    }
+
+    @Override
+    public void onRendererShutdown() {
+        Log.i(TAG, "onRendererShutdown");
+        mediaPlayer.stop();
+    }
+
+    @Override
+    public void onFinishFrame(Viewport viewport) {
+    }
+
+    @Override
+    public void onSurfaceChanged(int width, int height) {
+        Log.i(TAG, "onSurfaceChanged");
+    }
+    //endregion
+    //region KeyEvent.Callback
     // 助けて
     @Override
     public boolean onKeyUp(int keycode, KeyEvent event) {
@@ -184,43 +312,8 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
 
         return true;
     }
-
-    @Override
-    public void onSurfaceCreated(EGLConfig config) {
-        Log.i(TAG, "onSurfaceCreated");
-        GLES20.glClearColor(0.1f, 0.1f, 0.1f, 0.5f);
-
-        /* モデルの生成 */
-        final float fAngle = (float) (0.4 * PI), rAngle = (float) (0.6 * PI);
-        Model3D frontModel, frontSideModel, rearSideModel, rearModel;
-        frontModel = new PartialSphereModelCreator(0.0f, fAngle).getPartialSphereModel();
-        frontSideModel = new PartialSphereModelCreator(fAngle, (float)(0.5 * PI)).getPartialSphereModel();
-        rearSideModel = new PartialSphereModelCreator((float)(0.5 * PI), rAngle).getPartialSphereModel();
-        rearModel = new PartialSphereModelCreator(rAngle, (float)(PI)).getPartialSphereModel();
-        checkGLError("Model Generation");
-        Log.d(TAG, "Generated models");
-
-        compileShaders();
-        setShaderParams();
-
-        /* バッファオブジェクト */
-        frontBuffer = new ModelBuffer(frontModel);
-        frontSideBuffer = new ModelBuffer(frontSideModel);
-        rearSideBuffer = new ModelBuffer(rearSideModel);
-        rearBuffer = new ModelBuffer(rearModel);
-        checkGLError("Creating buffer objects");
-        Log.d(TAG, "Created buffer objects");
-
-        texture = createTexture();
-        surfaceTexture = new SurfaceTexture(texture);
-
-        /* 変換行列の設定 */
-        // TODO: 回転機能
-        Matrix.setIdentityM(modelMat, 0);
-
-        startPlayback();
-    }
-
+    //endregion
+    //region 細かい処理
     private void compileShaders() {
         frontShader = new ShaderProgram(readRawTextFile(R.raw.v_front), readRawTextFile(R.raw.f_frontrear));
         frontSideShader = new ShaderProgram(readRawTextFile(R.raw.v_frontside), readRawTextFile(R.raw.f_frontside));
@@ -228,10 +321,6 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
         rearShader = new ShaderProgram(readRawTextFile(R.raw.v_rear), readRawTextFile(R.raw.f_frontrear));
         checkGLError("Shader Compilation");
         Log.d(TAG, "Compiled GL shaders");
-    }
-
-    private String dump2fv(float[] fv) {
-        return "(" + fv[0] + ", " + fv[1] + ")";
     }
 
     private void setShaderParams() {
@@ -338,110 +427,6 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
         setGvrView(gvrView);
     }
 
-    /*
-     * コールバック(GvrView.StereoRenderer)
-     */
-
-    /* フレームの描画前にOpenGL ESの準備をする */
-    /* FIXME: なんか失敗してる？(glError 1282: GL_INVALID_OPERATION) */
-    @Override
-    public void onNewFrame(HeadTransform headTransform) {
-        // 出力先, オフセット, 視点のx, y, z, 視点の中心のx, y, z, 上向きベクトルのx, y, z
-        Matrix.setLookAtM(camera, 0, 0.0f, 0.0f, CAMERA_Z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-
-        surfaceTexture.updateTexImage();
-
-        /* テクスチャバッファの変換行列 */
-        float[] stTransform = new float[16];
-        surfaceTexture.getTransformMatrix(stTransform);
-
-        for (ShaderProgram shader : new ShaderProgram[] {frontShader, frontSideShader, rearSideShader, rearShader}) {
-            GLES20.glUseProgram(shader.getProgram());
-            GLES20.glUniformMatrix4fv(shader.getLocationOf("stTransform"), 1, false, stTransform, 0);
-        }
-
-        checkGLError("onNewFrame");
-    }
-
-    /* 与えられたEyeに対してフレームを描画する */
-    @Override
-    public void onDrawEye(Eye eye) {
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-
-        Matrix.multiplyMM(viewMat, 0, eye.getEyeView(), 0, camera, 0);
-        float[] perspective = eye.getPerspective(Z_NEAR, Z_FAR);
-        float[] mvpMat = calcMVP(modelMat, viewMat, perspective);
-
-        Map<ShaderProgram, ModelBuffer> task = new HashMap<ShaderProgram, ModelBuffer>() {
-            {
-                put(frontShader, frontBuffer);
-                put(frontSideShader, frontSideBuffer);
-                put(rearSideShader, rearSideBuffer);
-                put(rearShader, rearBuffer);
-            }
-        };
-
-        for (Map.Entry<ShaderProgram, ModelBuffer> t : task.entrySet()) {
-            ShaderProgram shader = t.getKey();
-            ModelBuffer buffer = t.getValue();
-            int vbo = buffer.getVbo();
-            int ibo = buffer.getIbo();
-
-            GLES20.glUseProgram(shader.getProgram());
-
-            GLES20.glUniformMatrix4fv(shader.getLocationOf("mvpMat"), 1, false, mvpMat, 0);
-
-            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
-            GLES20.glEnableVertexAttribArray(vbo);
-            GLES20.glVertexAttribPointer(shader.getLocationOf("position"), 3, GLES20.GL_FLOAT, false, 0, 0);
-
-            GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, ibo);
-
-            GLES20.glDrawElements(GLES20.GL_TRIANGLES, buffer.getIndicesCount(), GLES20.GL_UNSIGNED_SHORT, 0);
-
-            checkGLError("Drawing sphere");
-
-            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-            GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, texture);
-            GLES20.glUniform1i(shader.getLocationOf("texture"), 0);
-
-            // unbind
-            //GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
-            //GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
-        }
-        checkGLError("onDrawEye");
-    }
-
-    /*
-     * 便利なメソッドたち
-     */
-    /* 3つの行列を一度に掛け算して返す */
-    private float[] calcMVP(float[] m, float[] v, float[] p) {
-        float[] mv = new float[16];
-        Matrix.multiplyMM(mv, 0, v, 0, m, 0);
-        float[] mvp = new float[16];
-        Matrix.multiplyMM(mvp, 0, p, 0, mv, 0);
-        return mvp;
-    }
-
-    /* 生リソースをテキストとして読み、Stringで返す */
-    private String readRawTextFile(int resId) {
-        InputStream inputStream = getResources().openRawResource(resId);
-        try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                sb.append(line).append("\n");
-            }
-            reader.close();
-            return sb.toString();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
     private int createTexture() {
         int[] textureIds = new int[1];
         GLES20.glGenTextures(1, textureIds, 0);
@@ -465,47 +450,35 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
         }
     }
 
-    @Override
-    public void onStop() {
-        super.onStop();
-        mediaPlayer.stop();
+    /* 3つの行列を一度に掛け算して返す */
+    private float[] calcMVP(float[] m, float[] v, float[] p) {
+        float[] mv = new float[16];
+        Matrix.multiplyMM(mv, 0, v, 0, m, 0);
+        float[] mvp = new float[16];
+        Matrix.multiplyMM(mvp, 0, p, 0, mv, 0);
+        return mvp;
     }
 
-    @Override
-    public void onRendererShutdown() {
-        Log.i(TAG, "onRendererShutdown");
-        mediaPlayer.stop();
+    private String dump2fv(float[] fv) {
+        return "(" + fv[0] + ", " + fv[1] + ")";
     }
 
-    /*
-     * ここから下はどうでもいいやつ
-     */
-    @Override
-    public void onStart() {
-        super.onStart();
+    /* 生リソースをテキストとして読み、Stringで返す */
+    private String readRawTextFile(int resId) {
+        InputStream inputStream = getResources().openRawResource(resId);
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line).append("\n");
+            }
+            reader.close();
+            return sb.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-    }
-
-    @Override
-    public void onFinishFrame(Viewport viewport) {
-    }
-
-    @Override
-    public void onSurfaceChanged(int width, int height) {
-        Log.i(TAG, "onSurfaceChanged");
-    }
-
-    @Override
-    public void onCardboardTrigger() {
-        Log.i(TAG, "onCardboardTrigger");
-    }
+    //endregion
 }
