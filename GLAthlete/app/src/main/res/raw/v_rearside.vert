@@ -26,11 +26,9 @@ vec2 apply_transform(in float u, in float v)
 vec2 calcFTexCoord(void)
 {
     float r = abs((PI / 2.0) + asin(abs(position.z))) / (PI / 2.0);
-    float t;
+    float t = atan(position.y, position.x);
 
-    t = atan(position.y, position.x);
-
-    float a = r * cos(t), b = r * sin(t);
+    float a = -r * cos(t), b = r * sin(t);
 
     float fCu = fCenter.x, fCv = fCenter.y, fLu = fLen.x, fLv = fLen.y;
 
@@ -40,11 +38,9 @@ vec2 calcFTexCoord(void)
 vec2 calcRTexCoord(void)
 {
     float r = abs(acos(abs(position.z))) / (PI / 2.0);
-    float t;
+    float t = atan(position.y, position.x);
 
-    t = atan(position.y, position.x);
-
-    float a = r * cos(t), b = r * sin(t);
+    float a = -r * cos(t), b = r * sin(t);
 
     float rCu = rCenter.x, rCv = rCenter.y, rLu = rLen.x, rLv = rLen.y;
 

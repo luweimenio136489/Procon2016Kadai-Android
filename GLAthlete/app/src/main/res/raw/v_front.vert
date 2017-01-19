@@ -32,7 +32,7 @@ vec2 calcFTexCoord(void)
     else
         t = atan(position.y, position.x);
 
-    float a = r * cos(t), b = r * sin(t);
+    float a = -r * cos(t), b = r * sin(t);
 
     float fCu = fCenter.x, fCv = fCenter.y, fLu = fLen.x, fLv = fLen.y;
 
