@@ -22,16 +22,16 @@ import com.google.vr.sdk.base.GvrView;
 import com.google.vr.sdk.base.HeadTransform;
 import com.google.vr.sdk.base.Viewport;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.microedition.khronos.egl.EGLConfig;
 
 import static java.lang.Math.PI;
+
+import static nittcprocon.glathlete.UtilsDroid.*;
+import static nittcprocon.glathlete.UtilsGL.*;
+import static nittcprocon.glathlete.UtilsMisc.*;
 
 /**
  * Google VR SDKを使って実際の描画を行う
@@ -43,8 +43,8 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
     //region グローバル人材
     private static final String TAG = "VRActivity";
     private static final float CAMERA_Z = 0.01f, Z_NEAR = 0.1f, Z_FAR = 100.0f; // ？
-    private float[] modelMat, viewMat, camera;      // 変換行列
-    private float[] fLen, rLen, fCenter, rCenter;   // シェーダーに渡すマッピング定数
+    private float[] modelMat, viewMat, camera;      // 変換行列 (mat4)
+    private float[] fCenter, rCenter, fLen, rLen;   // シェーダーに渡すマッピング定数 (vec2)
     private int texture;
     private ModelBuffer frontBuffer, frontSideBuffer, rearSideBuffer, rearBuffer;
     private ShaderProgram frontShader, frontSideShader, rearSideShader, rearShader;
@@ -65,12 +65,17 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
         modelMat = new float[16];
         viewMat = new float[16];
 
+        fCenter = new float[2];
+        rCenter = new float[2];
+        fLen = new float[2];
+        rLen = new float[2];
+
         Intent intent = getIntent();
         uri = intent.getStringExtra("uri");
         Log.d(TAG, "URI: " + uri);
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        loadSharedPreferences();
+        loadSharedPreferences(sharedPreferences, fCenter, rCenter, fLen, rLen);
     }
 
     @Override
@@ -130,8 +135,8 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
         surfaceTexture.getTransformMatrix(stTransform);
 
         for (ShaderProgram shader : new ShaderProgram[] {frontShader, frontSideShader, rearSideShader, rearShader}) {
-            GLES20.glUseProgram(shader.getProgram());
-            GLES20.glUniformMatrix4fv(shader.getLocationOf("stTransform"), 1, false, stTransform, 0);
+            shader.useProgram();
+            shader.uniformMatrix4fv("stTransform", 1, false, stTransform, 0);
         }
 
         checkGLError("onNewFrame");
@@ -161,9 +166,9 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
             int vbo = buffer.getVbo();
             int ibo = buffer.getIbo();
 
-            GLES20.glUseProgram(shader.getProgram());
+            shader.useProgram();
 
-            GLES20.glUniformMatrix4fv(shader.getLocationOf("mvpMat"), 1, false, mvpMat, 0);
+            shader.uniformMatrix4fv("mvpMat", 1, false, mvpMat, 0);
 
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
             GLES20.glEnableVertexAttribArray(vbo);
@@ -177,7 +182,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
 
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
             GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, texture);
-            GLES20.glUniform1i(shader.getLocationOf("texture"), 0);
+            shader.uniform1i("texture", 0);
 
             // unbind
             //GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
@@ -287,7 +292,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
                 break;
 
             case KeyEvent.KEYCODE_C:
-                setSharedPreferences();
+                setSharedPreferences(sharedPreferences, fCenter, rCenter, fLen, rLen);
                 Log.d(TAG, "設定を保存");
                 break;
 
@@ -315,10 +320,10 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
     //endregion
     //region 細かい処理
     private void compileShaders() {
-        frontShader = new ShaderProgram(readRawTextFile(R.raw.v_front), readRawTextFile(R.raw.f_frontrear));
-        frontSideShader = new ShaderProgram(readRawTextFile(R.raw.v_frontside), readRawTextFile(R.raw.f_frontside));
-        rearSideShader = new ShaderProgram(readRawTextFile(R.raw.v_rearside), readRawTextFile(R.raw.f_rearside));
-        rearShader = new ShaderProgram(readRawTextFile(R.raw.v_rear), readRawTextFile(R.raw.f_frontrear));
+        frontShader = new ShaderProgram(readRawTextFile(this, R.raw.v_front), readRawTextFile(this, R.raw.f_frontrear));
+        frontSideShader = new ShaderProgram(readRawTextFile(this, R.raw.v_frontside), readRawTextFile(this, R.raw.f_frontside));
+        rearSideShader = new ShaderProgram(readRawTextFile(this, R.raw.v_rearside), readRawTextFile(this, R.raw.f_rearside));
+        rearShader = new ShaderProgram(readRawTextFile(this, R.raw.v_rear), readRawTextFile(this, R.raw.f_frontrear));
         checkGLError("Shader Compilation");
         Log.d(TAG, "Compiled GL shaders");
     }
@@ -338,38 +343,6 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
 
         checkGLError("Parameter Setting");
         Log.d(TAG, "Set GL parameters");
-    }
-
-    private void loadSharedPreferences() {
-        float fCenter_u = sharedPreferences.getFloat("front_center_u", 0.25f);
-        float fCenter_v = sharedPreferences.getFloat("front_center_v", 0.4444f);
-        fCenter = new float[] {fCenter_u, fCenter_v};
-
-        float rCenter_u = sharedPreferences.getFloat("rear_center_u", 0.75f);
-        float rCenter_v = sharedPreferences.getFloat("rear_center_v", 0.4444f);
-        rCenter = new float[] {rCenter_u, rCenter_v};
-
-        float fLen_u = sharedPreferences.getFloat("front_length_u", (float)(0.25 * 0.9));
-        float fLen_v = sharedPreferences.getFloat("front_length_v", (float)(0.4444 * 0.9));
-        fLen = new float[] {fLen_u, fLen_v};
-
-        float rLen_u = sharedPreferences.getFloat("rear_length_u", (float)(0.25 * 0.9));
-        float rLen_v = sharedPreferences.getFloat("rear_length_v", (float)(0.4444 * 0.9));
-        rLen = new float[] {rLen_u, rLen_v};
-    }
-
-    private void setSharedPreferences() {
-        Log.d(TAG, "setSharedPreferences");
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putFloat("front_center_u", fCenter[0]);
-        editor.putFloat("front_center_v", fCenter[1]);
-        editor.putFloat("rear_center_u", rCenter[0]);
-        editor.putFloat("rear_center_v", rCenter[1]);
-        editor.putFloat("front_length_u", fLen[0]);
-        editor.putFloat("front_length_v", fLen[1]);
-        editor.putFloat("rear_length_u", rLen[0]);
-        editor.putFloat("rear_length_v", rLen[1]);
-        editor.apply();
     }
 
     public void startPlayback() {
@@ -425,60 +398,6 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
             AndroidCompat.setSustainedPerformanceMode(this, true);
         }
         setGvrView(gvrView);
-    }
-
-    private int createTexture() {
-        int[] textureIds = new int[1];
-        GLES20.glGenTextures(1, textureIds, 0);
-        int textureId = textureIds[0];
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textureId);
-        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER,GLES20.GL_NEAREST);
-        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER,GLES20.GL_NEAREST);
-
-        checkGLError("createTexture");
-
-        return textureId;
-    }
-
-    /* OpenGL ESの内部でエラーがないかチェックし、あったら例外を投げる */
-    private static void checkGLError(String label) {
-        int error = GLES20.glGetError();
-        if (error != GLES20.GL_NO_ERROR) {
-            Log.e(TAG, label + ": glError " + error);
-            throw new RuntimeException(label + ": glError " + error);
-        }
-    }
-
-    /* 3つの行列を一度に掛け算して返す */
-    private float[] calcMVP(float[] m, float[] v, float[] p) {
-        float[] mv = new float[16];
-        Matrix.multiplyMM(mv, 0, v, 0, m, 0);
-        float[] mvp = new float[16];
-        Matrix.multiplyMM(mvp, 0, p, 0, mv, 0);
-        return mvp;
-    }
-
-    private String dump2fv(float[] fv) {
-        return "(" + fv[0] + ", " + fv[1] + ")";
-    }
-
-    /* 生リソースをテキストとして読み、Stringで返す */
-    private String readRawTextFile(int resId) {
-        InputStream inputStream = getResources().openRawResource(resId);
-        try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                sb.append(line).append("\n");
-            }
-            reader.close();
-            return sb.toString();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
     }
     //endregion
 }

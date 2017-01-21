@@ -6,6 +6,9 @@ import android.util.Log;
 import java.util.HashMap;
 import java.util.Map;
 
+import static nittcprocon.glathlete.UtilsGL.*;
+import static nittcprocon.glathlete.UtilsMisc.*;
+
 /**
  * GLのシェーダーをコンパイルし、パラメータの情報を保持する
  * TODO: 実行時エラーチェック
@@ -72,6 +75,8 @@ class ShaderProgram {
             parameters.put(uniformName, new ParamInfo(ParamInfo.Qualifier.Uniform, size[0], type[0], location));
             Log.d(TAG, "Uniform " + uniformName + ": size " + size[0] + ", type " + type[0] + ", location " + location);
         }
+
+        checkGLError("ShaderProgram");
     }
 
     int getProgram() {
@@ -79,22 +84,29 @@ class ShaderProgram {
     }
 
     void useProgram() {
-        Log.v(TAG, "useProgram: " + program);
         GLES20.glUseProgram(program);
+        checkGLError("useProgram: " + program);
     }
 
     public void deleteProgram() {
         GLES20.glUseProgram(0);
         GLES20.glDeleteProgram(program);
+        checkGLError("deleteProgram: " + program);
     }
 
-    private String dump2fv(float[] fv) {
-        return "(" + fv[0] + ", " + fv[1] + ")";
+    void uniform2fv(String name, int count, float[] vecs, int offset) {
+        GLES20.glUniform2fv(getLocationOf(name), count, vecs, offset);
+        checkGLError("uniform2fv: " + name + " -> " + dump2fv(vecs));
     }
 
-    void uniform2fv(String name, int count, float[] floats, int offset) {
-        Log.v(TAG, "uniform2fv: " + name + " -> " + dump2fv(floats));
-        GLES20.glUniform2fv(getLocationOf(name), count, floats, offset);
+    void uniformMatrix4fv(String name, int count, boolean transpose, float[] mats, int offset) {
+        GLES20.glUniformMatrix4fv(getLocationOf(name), count, transpose, mats, offset);
+        checkGLError("uniformMatrix4fv: " + name);
+    }
+
+    void uniform1i(String name, int value) {
+        GLES20.glUniform1i(getLocationOf(name), value);
+        checkGLError("uniform1i: " + name + " -> " + value);
     }
 
     void ifExistsUniform2fv(String name, int count, float[] floats, int offset) {
