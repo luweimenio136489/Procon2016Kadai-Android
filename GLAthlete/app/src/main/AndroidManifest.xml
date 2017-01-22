@@ -34,7 +34,9 @@
         </activity>
         <activity android:name=".SettingsActivity" />
         <activity android:name=".FileChoosingActivity" />
-        <activity android:name=".VisualAdjustmentActivity" />
+        <activity
+            android:name=".VisualAdjustmentActivity"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
     </application>
 
 </manifest>
