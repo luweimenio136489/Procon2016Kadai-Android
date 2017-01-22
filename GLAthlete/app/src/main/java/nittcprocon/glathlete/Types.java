@@ -46,6 +46,24 @@ public class Types {
         public List<Float> asList() {
             return java.util.Arrays.asList(asArray());
         }
+
+        // dedupに使う
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null)
+                return false;
+
+            if (this == obj)
+                return true;
+
+            if (getClass() == obj.getClass()) {
+                Vec3f other = (Vec3f) obj;
+                if (x == other.x && y == other.y && z == other.z)
+                    return true;
+            }
+
+            return false;
+        }
     }
 
     // 3頂点からなる三角形
