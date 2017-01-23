@@ -36,9 +36,9 @@ public class VisualAdjustmentActivity extends AppCompatActivity implements GLSur
     private GLSurfaceView view;
     private MediaPlayer mediaPlayer;
     private SurfaceTexture surfaceTexture;
-    private ModelBuffer videoMBuffer, blendMBuffer;
     private ShaderProgram quadShader;
     private SharedPreferences sharedPreferences;
+    private RenderingTask[] tasks;
     private float[] fCenter, rCenter, fLen, rLen;
     private int texture;
     //region AppCompatActivity
@@ -95,20 +95,22 @@ public class VisualAdjustmentActivity extends AppCompatActivity implements GLSur
                 new Vec3f(-1.0f, -1.0f, VIDEO_DEPTH), new Vec3f(1.0f, -1.0f, VIDEO_DEPTH),
                 new Vec3f(1.0f, 1.0f, VIDEO_DEPTH), new Vec3f(-1.0f, 1.0f, VIDEO_DEPTH)
         ));*/
-        Model3D videoModel = new Model3D().addQuad(new Quad(
+
+        quadShader = new ShaderProgram(readRawTextFile(this, R.raw.v_quad), readRawTextFile(this, R.raw.f_quad));
+        Model videoModel = new IndexedModel().addQuad(new Quad(
                 new Vec3f(1.0f, -1.0f, VIDEO_DEPTH), new Vec3f(-1.0f, -1.0f, VIDEO_DEPTH),
                 new Vec3f(-1.0f, 1.0f, VIDEO_DEPTH), new Vec3f(1.0f, 1.0f, VIDEO_DEPTH)
         ));
-        videoMBuffer = new ModelBuffer(videoModel);
 
         final float BLEND_DEPTH = 0.0f, BLEND_HEIGHT = 1.0f / 16.0f, BLEND_Y1 = 1.0f - BLEND_HEIGHT;
-        Model3D blendModel = new Model3D().addQuad(new Quad(
+        Model blendModel = new IndexedModel().addQuad(new Quad(
                 new Vec3f(-1.0f, BLEND_Y1, BLEND_DEPTH), new Vec3f(1.0f, BLEND_Y1, BLEND_DEPTH),
                 new Vec3f(1.0f, -1.0f, BLEND_DEPTH), new Vec3f(-1.0f, -1.0f, BLEND_DEPTH)
         ));
-        blendMBuffer = new ModelBuffer(blendModel);
 
-        quadShader = new ShaderProgram(readRawTextFile(this, R.raw.v_quad), readRawTextFile(this, R.raw.f_quad));
+        tasks = new RenderingTask[] {
+                new RenderingTask(videoModel, quadShader)
+        };
 
         texture = createTexture();
         surfaceTexture = new SurfaceTexture(texture);
@@ -126,36 +128,15 @@ public class VisualAdjustmentActivity extends AppCompatActivity implements GLSur
         quadShader.useProgram();
         quadShader.uniformMatrix4fv("stTransform", 1, false, stTransform, 0);
 
-        for (ShaderProgram shader : new ShaderProgram[] {quadShader}) {
+        for (RenderingTask task : tasks) {
+            ShaderProgram shader = task.shader();
             shader.useProgram();
             shader.ifExistsUniform2fv("fCenter", 1, fCenter, 0);
             shader.ifExistsUniform2fv("rCenter", 1, rCenter, 0);
             shader.ifExistsUniform2fv("fLen", 1, fLen, 0);
             shader.ifExistsUniform2fv("rLen", 1, rLen, 0);
-        }
 
-        Map<ShaderProgram, ModelBuffer> task = new HashMap<ShaderProgram, ModelBuffer>() {
-            {
-                put(quadShader, videoMBuffer);
-            }
-        };
-
-        for (Map.Entry<ShaderProgram, ModelBuffer> t : task.entrySet()) {
-            ShaderProgram shader = t.getKey();
-            ModelBuffer buffer = t.getValue();
-            int vbo = buffer.getVbo();
-            int ibo = buffer.getIbo();
-            int indices = buffer.getIndicesCount();
-
-            shader.useProgram();
-
-            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
-            GLES20.glEnableVertexAttribArray(vbo);
-            GLES20.glVertexAttribPointer(shader.getLocationOf("position"), 3, GLES20.GL_FLOAT, false, 0, 0);
-
-            GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, ibo);
-
-            GLES20.glDrawElements(GLES20.GL_TRIANGLES, indices, GLES20.GL_UNSIGNED_SHORT, 0);
+            task.render();
 
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
             GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, texture);
