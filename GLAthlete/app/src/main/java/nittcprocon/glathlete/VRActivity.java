@@ -22,16 +22,15 @@ import com.google.vr.sdk.base.GvrView;
 import com.google.vr.sdk.base.HeadTransform;
 import com.google.vr.sdk.base.Viewport;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import javax.microedition.khronos.egl.EGLConfig;
 
 import static java.lang.Math.PI;
+import static java.lang.Math.max;
 
 import static nittcprocon.glathlete.UtilsDroid.*;
 import static nittcprocon.glathlete.UtilsGL.*;
 import static nittcprocon.glathlete.UtilsMisc.*;
+import static nittcprocon.glathlete.Types.*;
 
 /**
  * Google VR SDKを使って実際の描画を行う
@@ -46,7 +45,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
     private float[] modelMat, viewMat, camera;      // 変換行列 (mat4)
     private float[] fCenter, rCenter, fLen, rLen;   // シェーダーに渡すマッピング定数 (vec2)
     private int texture;
-    private ModelBuffer frontBuffer, frontSideBuffer, rearSideBuffer, rearBuffer;
+    private RenderingTask[] tasks;
     private ShaderProgram frontShader, frontSideShader, rearSideShader, rearShader;
     private String uri;
     private SurfaceTexture surfaceTexture;
@@ -85,24 +84,30 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
 
         /* モデルの生成 */
         final float fAngle = (float) (0.4 * PI), rAngle = (float) (0.6 * PI);
-        Model3D frontModel, frontSideModel, rearSideModel, rearModel;
-        frontModel = new PartialSphereModelCreator(0.0f, fAngle).getPartialSphereModel();
-        frontSideModel = new PartialSphereModelCreator(fAngle, (float)(0.5 * PI)).getPartialSphereModel();
-        rearSideModel = new PartialSphereModelCreator((float)(0.5 * PI), rAngle).getPartialSphereModel();
-        rearModel = new PartialSphereModelCreator(rAngle, (float)(PI)).getPartialSphereModel();
-        checkGLError("Model Generation");
-        Log.d(TAG, "Generated models");
 
-        compileShaders();
+        Model frontModel = new IndexedModel();
+        Model frontSideModel = new IndexedModel();
+        Model rearSideModel = new IndexedModel();
+        Model rearModel = new IndexedModel();
+
+        generatePartialSphereModel(frontModel, 0.0f, fAngle);
+        generatePartialSphereModel(frontSideModel, fAngle, (float)(0.5 * PI));
+        generatePartialSphereModel(rearSideModel, (float)(0.5 * PI), rAngle);
+        generatePartialSphereModel(rearModel, rAngle, (float)(PI));
+
+        frontShader = new ShaderProgram(readRawTextFile(this, R.raw.v_front), readRawTextFile(this, R.raw.f_frontrear));
+        frontSideShader = new ShaderProgram(readRawTextFile(this, R.raw.v_frontside), readRawTextFile(this, R.raw.f_frontside));
+        rearSideShader = new ShaderProgram(readRawTextFile(this, R.raw.v_rearside), readRawTextFile(this, R.raw.f_rearside));
+        rearShader = new ShaderProgram(readRawTextFile(this, R.raw.v_rear), readRawTextFile(this, R.raw.f_frontrear));
+
         setShaderParams();
 
-        /* バッファオブジェクト */
-        frontBuffer = new ModelBuffer(frontModel);
-        frontSideBuffer = new ModelBuffer(frontSideModel);
-        rearSideBuffer = new ModelBuffer(rearSideModel);
-        rearBuffer = new ModelBuffer(rearModel);
-        checkGLError("Creating buffer objects");
-        Log.d(TAG, "Created buffer objects");
+        tasks = new RenderingTask[] {
+                new RenderingTask(frontModel, frontShader),
+                new RenderingTask(frontSideModel, frontSideShader),
+                new RenderingTask(rearSideModel, rearSideShader),
+                new RenderingTask(rearModel, rearShader)
+        };
 
         texture = createTexture();
         surfaceTexture = new SurfaceTexture(texture);
@@ -134,9 +139,9 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
         float[] stTransform = new float[16];
         surfaceTexture.getTransformMatrix(stTransform);
 
-        for (ShaderProgram shader : new ShaderProgram[] {frontShader, frontSideShader, rearSideShader, rearShader}) {
-            shader.useProgram();
-            shader.uniformMatrix4fv("stTransform", 1, false, stTransform, 0);
+        for (RenderingTask task : tasks) {
+            task.shader().useProgram();
+            task.shader().uniformMatrix4fv("stTransform", 1, false, stTransform, 0);
         }
 
         checkGLError("onNewFrame");
@@ -151,38 +156,15 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
         float[] perspective = eye.getPerspective(Z_NEAR, Z_FAR);
         float[] mvpMat = calcMVP(modelMat, viewMat, perspective);
 
-        Map<ShaderProgram, ModelBuffer> task = new HashMap<ShaderProgram, ModelBuffer>() {
-            {
-                put(frontShader, frontBuffer);
-                put(frontSideShader, frontSideBuffer);
-                put(rearSideShader, rearSideBuffer);
-                put(rearShader, rearBuffer);
-            }
-        };
+        for (RenderingTask task : tasks) {
+            task.shader().useProgram();
+            task.shader().uniformMatrix4fv("mvpMat", 1, false, mvpMat, 0);
 
-        for (Map.Entry<ShaderProgram, ModelBuffer> t : task.entrySet()) {
-            ShaderProgram shader = t.getKey();
-            ModelBuffer buffer = t.getValue();
-            int vbo = buffer.getVbo();
-            int ibo = buffer.getIbo();
-
-            shader.useProgram();
-
-            shader.uniformMatrix4fv("mvpMat", 1, false, mvpMat, 0);
-
-            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
-            GLES20.glEnableVertexAttribArray(vbo);
-            GLES20.glVertexAttribPointer(shader.getLocationOf("position"), 3, GLES20.GL_FLOAT, false, 0, 0);
-
-            GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, ibo);
-
-            GLES20.glDrawElements(GLES20.GL_TRIANGLES, buffer.getIndicesCount(), GLES20.GL_UNSIGNED_SHORT, 0);
-
-            checkGLError("Drawing sphere");
+            task.render();
 
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
             GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, texture);
-            shader.uniform1i("texture", 0);
+            task.shader().uniform1i("texture", 0);
 
             // unbind
             //GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
@@ -319,15 +301,6 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
     }
     //endregion
     //region 細かい処理
-    private void compileShaders() {
-        frontShader = new ShaderProgram(readRawTextFile(this, R.raw.v_front), readRawTextFile(this, R.raw.f_frontrear));
-        frontSideShader = new ShaderProgram(readRawTextFile(this, R.raw.v_frontside), readRawTextFile(this, R.raw.f_frontside));
-        rearSideShader = new ShaderProgram(readRawTextFile(this, R.raw.v_rearside), readRawTextFile(this, R.raw.f_rearside));
-        rearShader = new ShaderProgram(readRawTextFile(this, R.raw.v_rear), readRawTextFile(this, R.raw.f_frontrear));
-        checkGLError("Shader Compilation");
-        Log.d(TAG, "Compiled GL shaders");
-    }
-
     private void setShaderParams() {
         Log.d(TAG, "setShaderParams: setting ");
         Log.d(TAG, "fCenter: " + dump2fv(fCenter) + ", rCenter: " + dump2fv(rCenter));
@@ -398,6 +371,40 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
             AndroidCompat.setSustainedPerformanceMode(this, true);
         }
         setGvrView(gvrView);
+    }
+
+    private void generatePartialSphereModel(Model model, float thetaBegin, float thetaEnd) {
+        final float RADIUS = 1.0f;
+        final float STACKS_PER_RADIANS = (float)(24.0 / PI);
+        final int STACKS = (int)max(1.0, STACKS_PER_RADIANS * (thetaEnd - thetaBegin));
+        final int SLICES = 24;
+
+        generatePartialSphereModel(model, thetaBegin, thetaEnd, RADIUS, STACKS, SLICES);
+    }
+
+    private void generatePartialSphereModel(Model model, float thetaBegin, float thetaEnd, float radius, int stacks, int slices) {
+        float theta = thetaEnd - thetaBegin;
+        for (int t = 0; t < stacks; t++) {
+            float theta1 = thetaBegin + theta * t / stacks;
+            float theta2 = thetaBegin + theta * (t + 1) / stacks;
+            for (int p = 0; p < slices; p++) {
+                float phi1 = (float)PI * 2.0f * p / slices;
+                float phi2 = (float)PI * 2.0f * (p + 1) / slices;
+
+                Vec3f v1 = rtp2xyz(radius, theta1, phi1);
+                Vec3f v2 = rtp2xyz(radius, theta1, phi2);
+                Vec3f v3 = rtp2xyz(radius, theta2, phi2);
+                Vec3f v4 = rtp2xyz(radius, theta2, phi1);
+
+                if (theta1 == 0.0f) {                           // top/front cap, v1 == v2
+                    model.addTri(new Tri(v2, v3, v4));
+                } else if (nearlyEquals(theta2, (float)PI)) {   // bottom/rear cap, v3 == v4
+                    model.addTri(new Tri(v1, v2, v3));
+                } else {
+                    model.addQuad(new Quad(v1, v2, v3, v4));
+                }
+            }
+        }
     }
     //endregion
 }

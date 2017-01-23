@@ -3,6 +3,12 @@ package nittcprocon.glathlete;
 import android.content.SharedPreferences;
 import android.opengl.Matrix;
 
+import static java.lang.Math.abs;
+import static java.lang.Math.cos;
+import static java.lang.Math.sin;
+
+import static nittcprocon.glathlete.Types.*;
+
 /**
  * どこから呼んでもいい便利メソッドたち
  * import staticして使う
@@ -53,5 +59,18 @@ class UtilsMisc {
             return "null";
 
         return "(" + fv[0] + ", " + fv[1] + ")";
+    }
+
+    static boolean nearlyEquals(float a, float b) {
+        return abs(a - b) < 0.000001; // この数字は適当
+    }
+
+    // r, θ, φ から Vec3f(x, y, z)に
+    static Vec3f rtp2xyz(float r, float t, float p) {
+        return new Vec3f(
+                (float)(r * sin(t) * cos(p)),
+                (float)(r * sin(t) * sin(p)),
+                (float)(r * cos(t))
+        );
     }
 }

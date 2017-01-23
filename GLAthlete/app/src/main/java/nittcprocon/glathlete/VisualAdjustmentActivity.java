@@ -90,11 +90,7 @@ public class VisualAdjustmentActivity extends AppCompatActivity implements GLSur
         // 背景色を設定
         GLES20.glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
 
-        final float VIDEO_DEPTH = -0.1f;/*
-        Model3D videoModel = new Model3D().addQuad(new Quad(
-                new Vec3f(-1.0f, -1.0f, VIDEO_DEPTH), new Vec3f(1.0f, -1.0f, VIDEO_DEPTH),
-                new Vec3f(1.0f, 1.0f, VIDEO_DEPTH), new Vec3f(-1.0f, 1.0f, VIDEO_DEPTH)
-        ));*/
+        final float VIDEO_DEPTH = -0.1f;
 
         quadShader = new ShaderProgram(readRawTextFile(this, R.raw.v_quad), readRawTextFile(this, R.raw.f_quad));
         Model videoModel = new IndexedModel().addQuad(new Quad(

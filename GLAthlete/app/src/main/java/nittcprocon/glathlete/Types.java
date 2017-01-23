@@ -7,31 +7,31 @@ import java.util.List;
  * static importを乱用していくスタイル
  */
 
-public class Types {
+class Types {
     // float2要素のベクトル
     public static class Vec2f {
-        public float x;
-        public float y;
+        float x;
+        float y;
 
         Vec2f(float x_, float y_) {
             this.x = x_;
             this.y = y_;
         }
 
-        public Float[] asArray() {
+        Float[] asArray() {
             return new Float[] {x, y};
         }
 
-        public List<Float> asList() {
+        List<Float> asList() {
             return java.util.Arrays.asList(asArray());
         }
     }
 
     // float3要素のベクトル
-    public static class Vec3f {
-        public float x;
-        public float y;
-        public float z;
+    static class Vec3f {
+        float x;
+        float y;
+        float z;
 
         Vec3f(float x_, float y_, float z_) {
             this.x = x_;
@@ -39,11 +39,11 @@ public class Types {
             this.z = z_;
         }
 
-        public Float[] asArray() {
+        Float[] asArray() {
             return new Float[] {x, y, z};
         }
 
-        public List<Float> asList() {
+        List<Float> asList() {
             return java.util.Arrays.asList(asArray());
         }
 
@@ -68,44 +68,44 @@ public class Types {
 
     // 3頂点からなる三角形
     // a, b, c の順に右回り
-    public static class Tri {
-        public Vec3f a;
-        public Vec3f b;
-        public Vec3f c;
+    static class Tri {
+        Vec3f a;
+        Vec3f b;
+        Vec3f c;
 
-        Tri(Vec3f a_, Vec3f b_, Vec3f c_) {
-            this.a = a_;
-            this.b = b_;
-            this.c = c_;
+        Tri(Vec3f a, Vec3f b, Vec3f c) {
+            this.a = a;
+            this.b = b;
+            this.c = c;
         }
 
-        public Vec3f[] asArray() {
+        Vec3f[] asArray() {
             return new Vec3f[] {a, b, c};
         }
-        public List<Vec3f> asList() {
+        List<Vec3f> asList() {
             return java.util.Arrays.asList(asArray());
         }
     }
 
     // 4頂点からなる四角形
     // a, b, c, d の順に右回り
-    public static class Quad {
-        public Vec3f a;
-        public Vec3f b;
-        public Vec3f c;
-        public Vec3f d;
+    static class Quad {
+        Vec3f a;
+        Vec3f b;
+        Vec3f c;
+        Vec3f d;
 
-        Quad(Vec3f a_, Vec3f b_, Vec3f c_, Vec3f d_) {
-            this.a = a_;
-            this.b = b_;
-            this.c = c_;
-            this.d = d_;
+        Quad(Vec3f a, Vec3f b, Vec3f c, Vec3f d) {
+            this.a = a;
+            this.b = b;
+            this.c = c;
+            this.d = d;
         }
 
-        public Vec3f[] asArray() {
+        Vec3f[] asArray() {
             return new Vec3f[] {a, b, c, d};
         }
-        public List<Vec3f> asList() {
+        List<Vec3f> asList() {
             return java.util.Arrays.asList(asArray());
         }
     }
