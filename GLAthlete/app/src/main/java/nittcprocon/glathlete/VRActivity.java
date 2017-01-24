@@ -46,7 +46,6 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
     private float[] fCenter, rCenter, fLen, rLen;   // シェーダーに渡すマッピング定数 (vec2)
     private int texture;
     private RenderingTask[] tasks;
-    private ShaderProgram frontShader, frontSideShader, rearSideShader, rearShader;
     private String uri;
     private SurfaceTexture surfaceTexture;
     private MediaPlayer mediaPlayer;
@@ -82,25 +81,24 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
         Log.i(TAG, "onSurfaceCreated");
         GLES20.glClearColor(0.1f, 0.1f, 0.1f, 0.5f);
 
-        /* モデルの生成 */
         final float fAngle = (float) (0.4 * PI), rAngle = (float) (0.6 * PI);
 
-        Model frontModel = new IndexedModel();
-        Model frontSideModel = new IndexedModel();
-        Model rearSideModel = new IndexedModel();
-        Model rearModel = new IndexedModel();
+        Model frontModel, frontSideModel, rearSideModel, rearModel;
+        frontModel = new IndexedModel();
+        frontSideModel = new IndexedModel();
+        rearSideModel = new IndexedModel();
+        rearModel = new IndexedModel();
 
         generatePartialSphereModel(frontModel, 0.0f, fAngle);
         generatePartialSphereModel(frontSideModel, fAngle, (float)(0.5 * PI));
         generatePartialSphereModel(rearSideModel, (float)(0.5 * PI), rAngle);
         generatePartialSphereModel(rearModel, rAngle, (float)(PI));
 
+        ShaderProgram frontShader, frontSideShader, rearSideShader, rearShader;
         frontShader = new ShaderProgram(readRawTextFile(this, R.raw.v_front), readRawTextFile(this, R.raw.f_frontrear));
         frontSideShader = new ShaderProgram(readRawTextFile(this, R.raw.v_frontside), readRawTextFile(this, R.raw.f_frontside));
         rearSideShader = new ShaderProgram(readRawTextFile(this, R.raw.v_rearside), readRawTextFile(this, R.raw.f_rearside));
         rearShader = new ShaderProgram(readRawTextFile(this, R.raw.v_rear), readRawTextFile(this, R.raw.f_frontrear));
-
-        setShaderParams();
 
         tasks = new RenderingTask[] {
                 new RenderingTask(frontModel, frontShader),
@@ -108,6 +106,8 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
                 new RenderingTask(rearSideModel, rearSideShader),
                 new RenderingTask(rearModel, rearShader)
         };
+
+        setShaderParams();
 
         texture = createTexture();
         surfaceTexture = new SurfaceTexture(texture);
@@ -121,8 +121,19 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
 
     @Override
     public void onStop() {
+        Log.v(TAG, "onStop");
         super.onStop();
-        mediaPlayer.stop();
+
+        if (mediaPlayer.isPlaying())
+            mediaPlayer.stop();
+        mediaPlayer.reset();
+        mediaPlayer.release();
+    }
+
+    @Override
+    public void onRestart() {
+        Log.d(TAG, "onRestart");
+        super.onRestart();
     }
     //endregion
     //region GvrView.StereoRenderer
@@ -160,11 +171,11 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
             task.shader().useProgram();
             task.shader().uniformMatrix4fv("mvpMat", 1, false, mvpMat, 0);
 
-            task.render();
-
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
             GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, texture);
             task.shader().uniform1i("texture", 0);
+
+            task.render();
 
             // unbind
             //GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
@@ -175,8 +186,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
 
     @Override
     public void onRendererShutdown() {
-        Log.i(TAG, "onRendererShutdown");
-        mediaPlayer.stop();
+        Log.v(TAG, "onRendererShutdown");
     }
 
     @Override
@@ -185,7 +195,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
 
     @Override
     public void onSurfaceChanged(int width, int height) {
-        Log.i(TAG, "onSurfaceChanged");
+        Log.v(TAG, "onSurfaceChanged");
     }
     //endregion
     //region KeyEvent.Callback
@@ -306,7 +316,8 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
         Log.d(TAG, "fCenter: " + dump2fv(fCenter) + ", rCenter: " + dump2fv(rCenter));
         Log.d(TAG, "fLen: " + dump2fv(fLen) + ", rLen: " + dump2fv(rLen));
 
-        for (ShaderProgram shader : new ShaderProgram[] {frontShader, frontSideShader, rearSideShader, rearShader}) {
+        for (RenderingTask task : tasks) {
+            ShaderProgram shader = task.shader();
             shader.useProgram();
             shader.ifExistsUniform2fv("fCenter", 1, fCenter, 0);
             shader.ifExistsUniform2fv("rCenter", 1, rCenter, 0);
