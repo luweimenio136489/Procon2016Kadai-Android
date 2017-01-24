@@ -138,7 +138,6 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
     //endregion
     //region GvrView.StereoRenderer
     /* フレームの描画前にOpenGL ESの準備をする */
-    /* FIXME: なんか失敗してる？(glError 1282: GL_INVALID_OPERATION) */
     @Override
     public void onNewFrame(HeadTransform headTransform) {
         // 出力先, オフセット, 視点のx, y, z, 視点の中心のx, y, z, 上向きベクトルのx, y, z
