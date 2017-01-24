@@ -337,8 +337,6 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
             mediaPlayer.setSurface(surface);
             mediaPlayer.setLooping(true);
 
-            mediaPlayer.prepareAsync();
-
             //mediaPlayer.setOnBufferingUpdateListener(this);
             //mediaPlayer.setOnCompletionListener(this);
             //mediaPlayer.setOnVideoSizeChangedListener(this);
@@ -351,7 +349,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
                     Log.d(TAG, "mediaPlayer.start()");
                 }
             });
-
+            mediaPlayer.prepareAsync();
         } catch(Exception e) {
             e.printStackTrace();
         }
