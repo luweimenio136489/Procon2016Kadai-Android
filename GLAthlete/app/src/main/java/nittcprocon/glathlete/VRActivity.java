@@ -128,6 +128,7 @@ public class VRActivity extends GvrActivity implements GvrView.StereoRenderer, K
             mediaPlayer.stop();
         mediaPlayer.reset();
         mediaPlayer.release();
+        mediaPlayer = null;
     }
 
     @Override

@@ -36,6 +36,7 @@
         <activity android:name=".FileChoosingActivity" />
         <activity
             android:name=".VisualAdjustmentActivity"
+            android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
     </application>
 

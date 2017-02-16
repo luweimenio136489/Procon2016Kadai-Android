@@ -30,5 +30,4 @@ class UtilsDroid {
         }
         return null;
     }
-
 }

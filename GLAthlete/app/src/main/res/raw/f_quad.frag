@@ -17,6 +17,6 @@ vec2 apply_transform(in vec2 uv)
 }
 
 void main(void) {
-	//gl_FragColor = texture2D(texture, texCoord);
-	gl_FragColor = texture2D(texture, apply_transform(gl_FragCoord.xy));
+	gl_FragColor = texture2D(texture, texCoord);
+	//gl_FragColor = texture2D(texture, apply_transform(gl_FragCoord.xy));
 }
