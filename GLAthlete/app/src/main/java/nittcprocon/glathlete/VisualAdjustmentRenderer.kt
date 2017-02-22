@@ -1,6 +1,5 @@
 package nittcprocon.glathlete
 
-import android.content.Context
 import android.graphics.SurfaceTexture
 import android.media.AudioManager
 import android.media.MediaPlayer
@@ -15,7 +14,6 @@ import android.view.Surface
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
-import nittcprocon.glathlete.UtilsDroid.readRawTextFile
 import nittcprocon.glathlete.UtilsGL.checkGLError
 import nittcprocon.glathlete.UtilsGL.createTexture
 import nittcprocon.glathlete.UtilsMisc.loadSharedPreferences

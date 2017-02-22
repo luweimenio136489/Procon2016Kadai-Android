@@ -16,7 +16,8 @@ import nittcprocon.glathlete.Types.*
  * 生成の処理は雑なので遅いかも
  */
 
-internal class IndexedModel : SlowModel() {
+internal class IndexedModel : Model {
+    private var vertices: MutableList<Vec3f> = ArrayList()
     private var uniqueVertices: MutableList<Vec3f>? = null
     private var indices: MutableList<Short>? = null
     private var vbo: Int = 0
@@ -25,12 +26,14 @@ internal class IndexedModel : SlowModel() {
     private var isBufferBound = false
 
     override fun addTri(tri: Tri): Model {
-        super.addTri(tri)
+        isBufferBound = false
+        vertices.addAll(tri.asList())
         return this
     }
 
     override fun addQuad(quad: Quad): Model {
-        super.addQuad(quad)
+        addTri(Tri(quad.a, quad.b, quad.c))
+        addTri(Tri(quad.d, quad.c, quad.a))
         return this
     }
 
