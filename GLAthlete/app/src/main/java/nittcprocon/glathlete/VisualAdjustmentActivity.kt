@@ -18,16 +18,15 @@ class VisualAdjustmentActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_visual_adjustment)
 
-        view = findViewById(R.id.visualAdjustmentGLSurfaceView) as VisualAdjustmentView
-
-        window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
-
+        view = VisualAdjustmentView(MyContexts.applicationContext)
         view.setEGLContextClientVersion(2)
-
         val uri = intent.getStringExtra("uri")
         view.setRenderer(VisualAdjustmentRenderer(Uri.parse(uri)))
+
+        setContentView(view)
+
+        window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
     }
 
     public override fun onPause() {
