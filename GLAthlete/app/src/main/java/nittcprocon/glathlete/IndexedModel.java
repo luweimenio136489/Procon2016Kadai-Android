@@ -46,7 +46,7 @@ class IndexedModel extends SlowModel {
         shader.useProgram();
 
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
-        GLES20.glEnableVertexAttribArray(vbo);
+        GLES20.glEnableVertexAttribArray(shader.getLocationOf("position"));
         GLES20.glVertexAttribPointer(shader.getLocationOf("position"), 3, GLES20.GL_FLOAT, false, 0, 0);
 
         GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, ibo);
