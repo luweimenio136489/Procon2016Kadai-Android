@@ -278,8 +278,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             else tmp = initalizeAttitude[i] - attitude[i];
             str[i] = String.format("%.4f",tmp);
         }
-        String now = "_" + (calender.get(Calendar.MONTH) +1) + "_" + calender.get(Calendar.DAY_OF_MONTH) + "_"
-                + calender.get(Calendar.HOUR_OF_DAY) + "_" +calender.get(Calendar.MINUTE);
+        String now = "_"
+                + String.format("%02d",calender.get(Calendar.MONTH) + 1) + "_"
+                + String.format("%02d",calender.get(Calendar.DAY_OF_MONTH)) + "_"
+                + String.format("%02d",calender.get(Calendar.HOUR_OF_DAY)) + "_"
+                + String.format("%02d",calender.get(Calendar.MINUTE)) + "_"
+                + String.format("%02d",calender.get(Calendar.SECOND));
         file = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/attitude" + now + ".txt");
         dataFile = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/sensorData" + now + ".txt");
 
