@@ -23,16 +23,11 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.github.mikephil.charting.animation.Easing;
-import com.github.mikephil.charting.charts.BarChart;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.data.BarData;
-import com.github.mikephil.charting.data.BarDataSet;
-import com.github.mikephil.charting.data.BarEntry;
-import com.github.mikephil.charting.utils.ColorTemplate;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -49,7 +44,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener, View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements SensorEventListener, View.OnClickListener, RadioGroup.OnCheckedChangeListener {
 
     private SensorManager sensor_manager;
     public static double Rad2Dec = (double) 180 / Math.PI;
@@ -59,6 +54,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private double[] attitude = new double[2];
     private int playCount = 0;
     double gravity;
+    public int muki;
     File file, dataFile;
     String soundFile;
     boolean isInited = false;
@@ -73,6 +69,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     View surface;
     Calendar calender;
     TextView nowState;
+    RadioGroup radioGroup;
     private static final int SAMPLE_RATE = 22050;
     private static final int BITRATE = 128000;
 
@@ -93,6 +90,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         ((Button) findViewById(R.id.reconnect)).setOnClickListener(this);
         surface = findViewById(R.id.isConnect);
         nowState = (TextView)findViewById(R.id.state);
+        radioGroup = (RadioGroup) findViewById(R.id.group);
+        radioGroup.setOnCheckedChangeListener(this);
+        radioGroup.check(R.id.yokoState);
+        muki=R.id.yokoState;
         /*sValue = (TextView) findViewById(R.id.sensorValue);
         aValue = (TextView) findViewById(R.id.attitudeVale);*/
 
@@ -294,7 +295,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         String outputAttitude = System.currentTimeMillis() -startTime + "," +
                 str[0] + "," + str[1] + "," + String.format("%.4f",gravity) + "\r\n";
-
         FileOutputStream fos = null;
         FileOutputStream fos2 = null;
         try {
@@ -318,8 +318,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         // attitude[0]:X軸に対する回転角　attitude[1]:Y軸に対する回転角
         double attitude[] = new double[2];
 
-        attitude[0] = Math.atan2(accelData[1],accelData[2]);
-        attitude[1] = Math.atan2(accelData[0],accelData[2]);
+        switch (muki){
+            case R.id.yokoState:
+                attitude[0] = Math.atan2(accelData[1],accelData[2]);
+                attitude[1] = Math.atan2(accelData[0],accelData[2]);
+                break;
+            case R.id.tateState:
+                attitude[0] = Math.atan2(accelData[2],accelData[1]);
+                attitude[1] = Math.atan2(accelData[0],accelData[1]);
+                break;
+        }
         return attitude;
     }
 
@@ -430,6 +438,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
         }
     }
+
+    @Override
+    public void onCheckedChanged(RadioGroup group,int checkedId){
+        muki = checkedId;
+    }
+
 
     /**
      * HTTP通信を行うクラス
