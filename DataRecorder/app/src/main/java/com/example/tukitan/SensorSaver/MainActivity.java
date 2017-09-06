@@ -52,11 +52,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private float[] magnetic = new float[3];
     private float[] gyro = new float[3];
     private double[] attitude = new double[2];
-    private int playCount = 0;
     double gravity;
     public int muki;
     File file, dataFile;
-    String soundFile;
     boolean isInited = false;
     private static boolean whiteState = false;
     long startTime;
@@ -72,6 +70,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     RadioGroup radioGroup;
     private static final int SAMPLE_RATE = 22050;
     private static final int BITRATE = 128000;
+
+    // log delay time
+    Handler mHandler;
+    private long DELAY = (long) 10;
+
+    // Output Data List
+    ArrayList<String> dataset;
+    ArrayList<String> sensorSet;
+    FileOutputStream fos;
+    FileOutputStream fos2;
 
     String now;
     private MediaRecorder mediarecorder; //録音用のメディアレコーダークラス
@@ -94,14 +102,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         radioGroup.setOnCheckedChangeListener(this);
         radioGroup.check(R.id.yokoState);
         muki=R.id.yokoState;
-        /*sValue = (TextView) findViewById(R.id.sensorValue);
-        aValue = (TextView) findViewById(R.id.attitudeVale);*/
-
-        /*LogFragment logFragment = (LogFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.log_fragment);
-        logView = logFragment.getLogView();*/
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         autoRefreshSettion();
+
+        dataset = new ArrayList<>();
+        sensorSet = new ArrayList<>();
     }
     /**
      * セッションの自動更新
@@ -236,7 +241,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     whiteState = true;
                     writeFileInit();
                     startTime = System.currentTimeMillis();
-                    (new Thread(new inputData())).start();
+
+                    mHandler = new Handler();
+                    mHandler.postDelayed(new inputData(),DELAY);
+
                     Toast.makeText(this, "書き込みを開始しました", Toast.LENGTH_SHORT).show();
                     startMediaRecord();
                     isInited = false;
@@ -257,6 +265,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             case R.id.stopButton:
                 sendRequest(ThetaRequest.getStopcaptureRequest(settionID));
                 whiteState = false;
+                mHandler.removeCallbacksAndMessages(null);
                 Toast.makeText(this, "書き込みを停止しました", Toast.LENGTH_SHORT).show();
                 stopRecord();
                 nowState.setText("現在の状態：停止中");
@@ -272,6 +281,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     // データをストレージへ出力
     synchronized public void inputText() {
         String[] str = new String[2];
+        long now = System.currentTimeMillis() - startTime;
         double tmp;
         for(int i=0;i<2;i++){
             if((initalizeAttitude[i] - attitude[i]) > Math.PI) tmp = initalizeAttitude[i] - attitude[i] - Math.PI;
@@ -279,39 +289,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             else tmp = initalizeAttitude[i] - attitude[i];
             str[i] = String.format("%.4f",tmp);
         }
-        String now = "_"
-                + String.format("%02d",calender.get(Calendar.MONTH) + 1) + "_"
-                + String.format("%02d",calender.get(Calendar.DAY_OF_MONTH)) + "_"
-                + String.format("%02d",calender.get(Calendar.HOUR_OF_DAY)) + "_"
-                + String.format("%02d",calender.get(Calendar.MINUTE)) + "_"
-                + String.format("%02d",calender.get(Calendar.SECOND));
-        file = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/attitude" + now + ".txt");
-        dataFile = new File(Environment.getExternalStorageDirectory() + "/SynchroAthlete/sensorData" + now + ".txt");
 
-        String getData = System.currentTimeMillis() - startTime + "," +
+
+        String getData = now + "," +
                 String.format("%.5f",accel[0]) + "," + String.format("%.5f",accel[1]) + "," + String.format("%.5f",accel[2]) + "," +
                 String.format("%.5f",magnetic[0]) + "," + String.format("%.5f",magnetic[1]) + "," + String.format("%.5f",magnetic[2]) + "," +
                 String.format("%.5f",gyro[0]) + "," + String.format("%.5f",gyro[1]) + "," + String.format("%.5f",gyro[2]) + "\r\n";
 
         String outputAttitude = System.currentTimeMillis() -startTime + "," +
-                str[0] + "," + str[1] + "," + String.format("%.4f",gravity) + "\r\n";
-        FileOutputStream fos = null;
-        FileOutputStream fos2 = null;
-        try {
-            fos = new FileOutputStream(file, true);
-            fos.write(outputAttitude.getBytes());
-            fos.close();
+              str[0] + "," + str[1] + "," + String.format("%.4f",gravity) + "\r\n";
+
+        dataset.add(outputAttitude);
+        sensorSet.add(getData);
 
             //System.out.println(outputAttitude+"   "+accel[2]);
-
-            fos2 = new FileOutputStream(dataFile, true);
-            fos2.write(getData.getBytes());
-            fos2.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     synchronized private double[] getAttitude(float accelData[]) {
@@ -346,6 +337,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
              * fos:傾きを記録するファイル
              * fos2:9軸センサのデータをそのまま保存するファイル
              */
+
             calender = Calendar.getInstance();
             String now = "_"
                     + String.format("%02d",calender.get(Calendar.MONTH) + 1) + "_"
@@ -359,12 +351,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             //SDカードへのpathを準備
             file.getParentFile().mkdir();
 
-            FileOutputStream fos = new FileOutputStream(file);
-            FileOutputStream fos2 = new FileOutputStream(dataFile);
+            fos = new FileOutputStream(file);
+            fos2 = new FileOutputStream(dataFile);
             fos.write("DataNum,0.016,offset.\r\n".getBytes());
             fos2.write("Time,Xaccel,Yaccel,Zaccel,Xmagnetic,Ymagnetic,Zmegnetic,Xgyro,Ygyro,Zgyro .\r\n".getBytes());
-            fos.close();
-            fos2.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -416,6 +406,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }else{
             try{
                 //録音停止
+                for(String elem :dataset){
+                    fos.write(elem.getBytes());
+                }
+                for(String elem :sensorSet){
+                    fos2.write(elem.getBytes());
+                }
+                fos.close();
+                fos2.close();
                 mediarecorder.stop();
                 mediarecorder.reset();
             }catch (Exception e){
@@ -428,14 +426,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private class inputData implements Runnable {
         @Override
         public void run() {
-            while (whiteState) {
-                try {
-                    Thread.sleep(16);
-                    inputText();
-                } catch (Exception e) {
-                    System.out.println(e);
-                }
-            }
+            inputText();
+            mHandler.postDelayed(this,DELAY);
         }
     }
 
@@ -445,9 +437,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
 
-    /**
-     * HTTP通信を行うクラス
-     */
     public class SendRequestAsync extends AsyncTask<Void, Void, String> {
         String payload_;
         Context context_;
